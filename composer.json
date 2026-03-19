@@ -1,0 +1,36 @@
+{
+    "name": "brigada/guardian",
+    "description": "Laravel project monitoring package — security audits, health checks, Discord notifications",
+    "type": "library",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.2",
+        "illuminate/support": "^11.0|^12.0",
+        "illuminate/console": "^11.0|^12.0",
+        "illuminate/database": "^11.0|^12.0",
+        "illuminate/http": "^11.0|^12.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.0|^10.0",
+        "phpunit/phpunit": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Brigada\\Guardian\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Brigada\\Guardian\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Brigada\\Guardian\\GuardianServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
