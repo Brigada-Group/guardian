@@ -7,6 +7,35 @@ Private Laravel monitoring package. Runs security audits, health checks, and per
 - PHP ^8.2
 - Laravel ^11.0 or ^12.0
 - Discord webhook URL
+- Membership in the [Brigada-Group](https://github.com/Brigada-Group) GitHub organization
+
+## Team Access Setup
+
+Before installing, each developer needs access to the private repository:
+
+### For org admins
+
+1. Go to [Brigada-Group members](https://github.com/orgs/Brigada-Group/people)
+2. Click **Invite member** and enter the developer's GitHub username or email
+3. Grant access to the `guardian` repository (at minimum **Read** role)
+
+### For developers
+
+Once you've accepted the org invite, create a personal access token:
+
+1. Go to [GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)](https://github.com/settings/tokens)
+2. Click **Generate new token (classic)**
+3. Name it something like `composer-brigada`
+4. Select the **`repo`** scope (required for private repos)
+5. Click **Generate token** and copy the `ghp_...` value immediately
+
+Then configure Composer (one-time per machine):
+
+```bash
+composer config --global github-oauth.github.com ghp_YOUR_TOKEN
+```
+
+> **Note:** Use `--global` so the token works across all projects on your machine. Never commit tokens to version control.
 
 ## Installation
 
@@ -99,12 +128,26 @@ Guardian auto-registers its schedule via the service provider. Ensure the Larave
 * * * * * cd /path-to-project && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-## CI Setup (GitHub Actions)
+## CI / Server Setup
+
+For CI pipelines and production servers, use a token stored as a secret — never hardcode it.
+
+### GitHub Actions
+
+Add `COMPOSER_GITHUB_TOKEN` as a repository secret, then:
 
 ```yaml
 - run: composer config github-oauth.github.com ${{ secrets.COMPOSER_GITHUB_TOKEN }}
-- run: composer require brigada/guardian
+- run: composer install
 ```
+
+### Production Servers
+
+```bash
+composer config --global github-oauth.github.com ghp_YOUR_DEPLOY_TOKEN
+```
+
+Use a dedicated machine user or fine-grained token with read-only access to the `guardian` repo.
 
 ## Notification Behavior
 
