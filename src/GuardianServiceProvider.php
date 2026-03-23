@@ -6,8 +6,10 @@ use Brigada\Guardian\Checks;
 use Brigada\Guardian\Commands\RunChecksCommand;
 use Brigada\Guardian\Commands\StatusCommand;
 use Brigada\Guardian\Support\CheckRegistry;
+use Brigada\Guardian\Exceptions\ExceptionNotifier;
 use Brigada\Guardian\Support\Deduplicator;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Support\ServiceProvider;
 
 class GuardianServiceProvider extends ServiceProvider
@@ -57,6 +59,8 @@ class GuardianServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(Deduplicator::class);
+
+        $this->app->singleton(ExceptionNotifier::class);
     }
 
     public function boot(): void
@@ -79,6 +83,16 @@ class GuardianServiceProvider extends ServiceProvider
             $schedule->command('guardian:run hourly')->hourly();
             $schedule->command('guardian:run daily')->dailyAt(config('guardian.notifications.daily_summary_time', '06:00'));
             $schedule->command('guardian:run weekly')->weeklyOn(1, '07:00');
+        });
+
+        $this->app->afterResolving(ExceptionHandler::class, function (ExceptionHandler $handler) {
+            if (method_exists($handler, 'reportable')) {
+                $handler->reportable(function (\Throwable $e) {
+                    if (in_array(config('guardian.environment', 'production'), config('guardian.enabled_environments', ['production']))) {
+                        $this->app->make(ExceptionNotifier::class)->handle($e);
+                    }
+                })->stop(false);
+            }
         });
     }
 }
