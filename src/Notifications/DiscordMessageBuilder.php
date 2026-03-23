@@ -88,6 +88,41 @@ class DiscordMessageBuilder
         ];
     }
 
+    public function buildException(
+        string $exceptionClass,
+        string $message,
+        string $url,
+        int $statusCode,
+        string $user,
+        string $ip,
+        string $headers,
+        string $stackTrace,
+    ): array {
+        $shortClass = class_basename($exceptionClass) ?: $exceptionClass;
+
+        return [
+            'embeds' => [
+                [
+                    'title' => "[{$this->projectName}] \xF0\x9F\x92\xA5 {$shortClass}",
+                    'color' => self::COLORS['critical'],
+                    'fields' => [
+                        ['name' => 'Message', 'value' => mb_substr($message, 0, 1024) ?: 'No message', 'inline' => false],
+                        ['name' => 'URL', 'value' => mb_substr($url, 0, 1024), 'inline' => true],
+                        ['name' => 'Status Code', 'value' => (string) $statusCode, 'inline' => true],
+                        ['name' => 'User', 'value' => $user ?: 'Guest', 'inline' => true],
+                        ['name' => 'IP Address', 'value' => $ip ?: 'N/A', 'inline' => true],
+                        ['name' => 'Headers', 'value' => mb_substr($headers, 0, 1024) ?: 'N/A', 'inline' => false],
+                        ['name' => 'Stack Trace', 'value' => mb_substr($stackTrace, 0, 1024) ?: 'N/A', 'inline' => false],
+                    ],
+                    'footer' => [
+                        'text' => "{$this->environment} | " . (gethostname() ?: 'unknown'),
+                    ],
+                    'timestamp' => date('c'),
+                ],
+            ],
+        ];
+    }
+
     private function severityRank(Status $status): int
     {
         return match ($status) {

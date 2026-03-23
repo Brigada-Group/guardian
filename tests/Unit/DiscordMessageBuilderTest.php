@@ -56,4 +56,46 @@ class DiscordMessageBuilderTest extends TestCase
         $this->assertStringContainsString('Daily Health Summary', $embed['title']);
         $this->assertCount(2, $embed['fields']);
     }
+
+    public function test_it_builds_exception_embed(): void
+    {
+        $builder = new DiscordMessageBuilder('Client Portal', 'production');
+
+        $payload = $builder->buildException(
+            exceptionClass: 'App\\Exceptions\\PaymentException',
+            message: 'Card declined',
+            url: 'POST /api/payments',
+            statusCode: 500,
+            user: 'ID:42 user@example.com',
+            ip: '192.168.1.1',
+            headers: 'User-Agent: Mozilla/5.0',
+            stackTrace: '#0 app/Services/PaymentService.php(45): process()',
+        );
+
+        $this->assertArrayHasKey('embeds', $payload);
+        $embed = $payload['embeds'][0];
+        $this->assertSame(0xFF0000, $embed['color']);
+        $this->assertStringContainsString('PaymentException', $embed['title']);
+        $this->assertStringContainsString('Client Portal', $embed['title']);
+        $this->assertCount(7, $embed['fields']);
+    }
+
+    public function test_exception_embed_truncates_long_message(): void
+    {
+        $builder = new DiscordMessageBuilder('App', 'production');
+
+        $payload = $builder->buildException(
+            exceptionClass: 'RuntimeException',
+            message: str_repeat('x', 2000),
+            url: 'GET /',
+            statusCode: 500,
+            user: 'Guest',
+            ip: '127.0.0.1',
+            headers: '',
+            stackTrace: '',
+        );
+
+        $messageField = $payload['embeds'][0]['fields'][0]['value'];
+        $this->assertLessThanOrEqual(1024, strlen($messageField));
+    }
 }
