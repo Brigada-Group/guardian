@@ -24,4 +24,12 @@ return [
         'daily_summary_time' => '06:00',
         'weekly_summary_day' => 'monday',
     ],
+    'exceptions' => [
+        'enabled' => true,
+        'dedup_minutes' => 5,
+        'ignored_exceptions' => [
+            // \Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class,
+            // \Illuminate\Auth\AuthenticationException::class,
+        ],
+    ],
 ];
