@@ -82,7 +82,11 @@ class QueryListener
     private function detectNPlusOne(string $normalized): bool
     {
         // Reset between requests
-        $currentId = request()?->fingerprint() ?? 'cli-' . getmypid();
+        try {
+            $currentId = request()?->fingerprint() ?? 'cli-' . getmypid();
+        } catch (\Throwable) {
+            $currentId = 'cli-' . getmypid();
+        }
         if (self::$requestId !== $currentId) {
             self::$queryCounts = [];
             self::$requestId = $currentId;
