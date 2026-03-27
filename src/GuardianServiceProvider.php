@@ -3,13 +3,41 @@
 namespace Brigada\Guardian;
 
 use Brigada\Guardian\Checks;
+use Brigada\Guardian\Commands\InstallCommand;
+use Brigada\Guardian\Commands\PruneCommand;
 use Brigada\Guardian\Commands\RunChecksCommand;
 use Brigada\Guardian\Commands\StatusCommand;
-use Brigada\Guardian\Support\CheckRegistry;
+use Brigada\Guardian\Commands\TestCommand;
 use Brigada\Guardian\Exceptions\ExceptionNotifier;
+use Brigada\Guardian\Http\Middleware\RequestMonitor;
+use Brigada\Guardian\Listeners\CacheListener;
+use Brigada\Guardian\Listeners\CommandListener;
+use Brigada\Guardian\Listeners\MailListener;
+use Brigada\Guardian\Listeners\NotificationListener;
+use Brigada\Guardian\Listeners\OutgoingHttpListener;
+use Brigada\Guardian\Listeners\QueryListener;
+use Brigada\Guardian\Listeners\ScheduledTaskListener;
+use Brigada\Guardian\Support\CheckRegistry;
 use Brigada\Guardian\Support\Deduplicator;
+use Illuminate\Cache\Events\CacheHit;
+use Illuminate\Cache\Events\CacheMissed;
+use Illuminate\Cache\Events\KeyForgotten;
+use Illuminate\Cache\Events\KeyWritten;
+use Illuminate\Console\Events\CommandFinished;
+use Illuminate\Console\Events\CommandStarting;
+use Illuminate\Console\Events\ScheduledTaskFailed;
+use Illuminate\Console\Events\ScheduledTaskFinished;
+use Illuminate\Console\Events\ScheduledTaskSkipped;
+use Illuminate\Console\Events\ScheduledTaskStarting;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Http\Client\Events\ConnectionFailed;
+use Illuminate\Http\Client\Events\ResponseReceived;
+use Illuminate\Mail\Events\MessageSent;
+use Illuminate\Notifications\Events\NotificationFailed;
+use Illuminate\Notifications\Events\NotificationSent;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 class GuardianServiceProvider extends ServiceProvider
@@ -61,6 +89,8 @@ class GuardianServiceProvider extends ServiceProvider
         $this->app->singleton(Deduplicator::class);
 
         $this->app->singleton(ExceptionNotifier::class);
+
+        $this->app->singleton(CacheListener::class);
     }
 
     public function boot(): void
@@ -75,16 +105,32 @@ class GuardianServiceProvider extends ServiceProvider
             $this->commands([
                 RunChecksCommand::class,
                 StatusCommand::class,
+                TestCommand::class,
+                InstallCommand::class,
+                PruneCommand::class,
             ]);
         }
 
+        $this->registerSchedule();
+        $this->registerExceptionHandler();
+        $this->registerEventListeners();
+    }
+
+    private function registerSchedule(): void
+    {
         $this->app->afterResolving(Schedule::class, function (Schedule $schedule) {
+            $dailyTime = config('guardian.notifications.daily_summary_time', '06:00');
+            $weeklyDay = $this->parseWeeklyDay(config('guardian.notifications.weekly_summary_day', 'monday'));
+
             $schedule->command('guardian:run every_5_min')->everyFiveMinutes();
             $schedule->command('guardian:run hourly')->hourly();
-            $schedule->command('guardian:run daily')->dailyAt(config('guardian.notifications.daily_summary_time', '06:00'));
-            $schedule->command('guardian:run weekly')->weeklyOn(1, '07:00');
+            $schedule->command('guardian:run daily')->dailyAt($dailyTime);
+            $schedule->command('guardian:run weekly')->weeklyOn($weeklyDay, '07:00');
         });
+    }
 
+    private function registerExceptionHandler(): void
+    {
         $this->app->afterResolving(ExceptionHandler::class, function (ExceptionHandler $handler) {
             if (method_exists($handler, 'reportable')) {
                 $handler->reportable(function (\Throwable $e) {
@@ -94,5 +140,66 @@ class GuardianServiceProvider extends ServiceProvider
                 })->stop(false);
             }
         });
+    }
+
+    private function registerEventListeners(): void
+    {
+        // Task 10: Outgoing HTTP Monitoring
+        if (config('guardian.monitoring.outgoing_http.enabled', true)) {
+            Event::listen(ResponseReceived::class, [OutgoingHttpListener::class, 'handleResponse']);
+            Event::listen(ConnectionFailed::class, [OutgoingHttpListener::class, 'handleConnectionFailed']);
+        }
+
+        // Task 11: Database Query Monitoring
+        if (config('guardian.monitoring.queries.enabled', true)) {
+            Event::listen(QueryExecuted::class, [QueryListener::class, 'handle']);
+        }
+
+        // Task 12: Mail Monitoring
+        if (config('guardian.monitoring.mail.enabled', true)) {
+            Event::listen(MessageSent::class, [MailListener::class, 'handleSent']);
+        }
+
+        // Task 13: Notification Monitoring
+        if (config('guardian.monitoring.notifications.enabled', true)) {
+            Event::listen(NotificationSent::class, [NotificationListener::class, 'handleSent']);
+            Event::listen(NotificationFailed::class, [NotificationListener::class, 'handleFailed']);
+        }
+
+        // Task 14: Cache Monitoring
+        if (config('guardian.monitoring.cache.enabled', true)) {
+            Event::listen(CacheHit::class, [CacheListener::class, 'handleHit']);
+            Event::listen(CacheMissed::class, [CacheListener::class, 'handleMiss']);
+            Event::listen(KeyWritten::class, [CacheListener::class, 'handleWrite']);
+            Event::listen(KeyForgotten::class, [CacheListener::class, 'handleForget']);
+        }
+
+        // Task 15: Command Monitoring
+        if (config('guardian.monitoring.commands.enabled', true)) {
+            Event::listen(CommandStarting::class, [CommandListener::class, 'handleStarting']);
+            Event::listen(CommandFinished::class, [CommandListener::class, 'handleFinished']);
+        }
+
+        // Task 16: Scheduled Task Monitoring
+        if (config('guardian.monitoring.scheduled_tasks.enabled', true)) {
+            Event::listen(ScheduledTaskStarting::class, [ScheduledTaskListener::class, 'handleStarting']);
+            Event::listen(ScheduledTaskFinished::class, [ScheduledTaskListener::class, 'handleFinished']);
+            Event::listen(ScheduledTaskFailed::class, [ScheduledTaskListener::class, 'handleFailed']);
+            Event::listen(ScheduledTaskSkipped::class, [ScheduledTaskListener::class, 'handleSkipped']);
+        }
+    }
+
+    private function parseWeeklyDay(string $day): int
+    {
+        return match (strtolower($day)) {
+            'sunday' => 0,
+            'monday' => 1,
+            'tuesday' => 2,
+            'wednesday' => 3,
+            'thursday' => 4,
+            'friday' => 5,
+            'saturday' => 6,
+            default => 1,
+        };
     }
 }
