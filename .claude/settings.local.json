@@ -21,7 +21,9 @@
       "Bash(./vendor/bin/phpunit --testdox 2>&1)",
       "Bash(git push:*)",
       "Bash(./vendor/bin/phpunit tests/Feature/DashboardAccessTest.php tests/Feature/DashboardApiTest.php tests/Unit/Security/ tests/Unit/Support/ --testdox 2>&1)",
-      "Bash(for f:*)"
+      "Bash(for f:*)",
+      "Bash(find:*)",
+      "Bash(git log:*)"
     ]
   }
 }
