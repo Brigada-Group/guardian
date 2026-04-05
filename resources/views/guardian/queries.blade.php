@@ -49,7 +49,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <template x-for="log in (data.logs.data || [])" :key="log.id">
+                                <template x-for="log in (data?.logs?.data || [])" :key="log.id">
                                     <tr class="gd-expandable" @click="expanded === log.id ? expanded = null : expanded = log.id">
                                         <td x-text="formatDate(log.created_at)"></td>
                                         <td x-text="formatMs(log.duration_ms)"></td>
@@ -68,12 +68,12 @@
                     <template x-if="expanded">
                         <div class="gd-expandable__content" x-text="getExpandedSql()"></div>
                     </template>
-                    <template x-if="data.logs.last_page > 1">
+                    <template x-if="data?.logs?.last_page > 1">
                         <div class="gd-pagination">
-                            <span x-text="`Showing ${data.logs.from}-${data.logs.to} of ${data.logs.total}`"></span>
+                            <span x-text="`Showing ${data?.logs?.from}-${data?.logs?.to} of ${data?.logs?.total}`"></span>
                             <div class="gd-pagination__links">
-                                <button class="gd-pagination__link" :disabled="!data.logs.prev_page_url" @click="goToPage(data.logs.current_page - 1)">Prev</button>
-                                <button class="gd-pagination__link" :disabled="!data.logs.next_page_url" @click="goToPage(data.logs.current_page + 1)">Next</button>
+                                <button class="gd-pagination__link" :disabled="!data?.logs?.prev_page_url" @click="goToPage(data?.logs?.current_page - 1)">Prev</button>
+                                <button class="gd-pagination__link" :disabled="!data?.logs?.next_page_url" @click="goToPage(data?.logs?.current_page + 1)">Next</button>
                             </div>
                         </div>
                     </template>
@@ -120,7 +120,7 @@ function queriesPage() {
 
         getExpandedSql() {
             if (!this.expanded || !this.data) return '';
-            const log = (this.data.logs.data || []).find(l => l.id === this.expanded);
+            const log = (this.data?.logs?.data || []).find(l => l.id === this.expanded);
             return log ? log.sql : '';
         },
 
@@ -137,14 +137,14 @@ function queriesPage() {
             const isDark = document.documentElement.classList.contains('gd-dark');
             const colors = getChartColors(isDark);
             const ctx = this.$refs.trendChart;
-            if (ctx && this.data.trend) {
+            if (ctx && this.data?.trend) {
                 this.charts.trend = SafeChart(ctx, {
                     type: 'line',
                     data: {
-                        labels: this.data.trend.map(d => formatDateShort(d.hour)),
+                        labels: this.data?.trend.map(d => formatDateShort(d.hour)),
                         datasets: [{
                             label: 'Slow Queries',
-                            data: this.data.trend.map(d => d.count),
+                            data: this.data?.trend.map(d => d.count),
                             borderColor: colors.yellow,
                             backgroundColor: colors.yellow + '20',
                             fill: true, tension: 0.3, pointRadius: 2,

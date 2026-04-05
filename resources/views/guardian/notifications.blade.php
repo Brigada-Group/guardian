@@ -43,7 +43,7 @@
                         <table class="gd-table">
                             <thead><tr><th>Channel</th><th>Count</th><th>Failures</th><th>Fail Rate</th></tr></thead>
                             <tbody>
-                                <template x-for="ch in (data.by_channel || [])" :key="ch.channel">
+                                <template x-for="ch in (data?.by_channel || [])" :key="ch.channel">
                                     <tr>
                                         <td x-text="ch.channel"></td>
                                         <td x-text="ch.count"></td>
@@ -75,7 +75,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <template x-for="log in (data.logs.data || [])" :key="log.id">
+                                <template x-for="log in (data?.logs?.data || [])" :key="log.id">
                                     <tr>
                                         <td x-text="formatDate(log.created_at)"></td>
                                         <td class="gd-mono gd-truncate" x-text="log.notification_class || '-'"></td>
@@ -87,12 +87,12 @@
                             </tbody>
                         </table>
                     </div>
-                    <template x-if="data.logs.last_page > 1">
+                    <template x-if="data?.logs?.last_page > 1">
                         <div class="gd-pagination">
-                            <span x-text="`Showing ${data.logs.from}-${data.logs.to} of ${data.logs.total}`"></span>
+                            <span x-text="`Showing ${data?.logs?.from}-${data?.logs?.to} of ${data?.logs?.total}`"></span>
                             <div class="gd-pagination__links">
-                                <button class="gd-pagination__link" :disabled="!data.logs.prev_page_url" @click="goToPage(data.logs.current_page - 1)">Prev</button>
-                                <button class="gd-pagination__link" :disabled="!data.logs.next_page_url" @click="goToPage(data.logs.current_page + 1)">Next</button>
+                                <button class="gd-pagination__link" :disabled="!data?.logs?.prev_page_url" @click="goToPage(data?.logs?.current_page - 1)">Prev</button>
+                                <button class="gd-pagination__link" :disabled="!data?.logs?.next_page_url" @click="goToPage(data?.logs?.current_page + 1)">Next</button>
                             </div>
                         </div>
                     </template>
@@ -144,16 +144,16 @@ function notificationsPage() {
             const isDark = document.documentElement.classList.contains('gd-dark');
             const colors = getChartColors(isDark);
             const ctx = this.$refs.channelChart;
-            if (!ctx || !this.data.by_channel) return;
+            if (!ctx || !this.data?.by_channel) return;
 
             const palette = [colors.blue, colors.green, colors.yellow, colors.purple, colors.cyan, colors.red];
             this.charts.channel = SafeChart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: this.data.by_channel.map(c => c.channel),
+                    labels: this.data?.by_channel.map(c => c.channel),
                     datasets: [{
-                        data: this.data.by_channel.map(c => c.count),
-                        backgroundColor: this.data.by_channel.map((_, i) => palette[i % palette.length]),
+                        data: this.data?.by_channel.map(c => c.count),
+                        backgroundColor: this.data?.by_channel.map((_, i) => palette[i % palette.length]),
                     }]
                 },
                 options: { plugins: { legend: { display: true, position: 'right', labels: { boxWidth: 12 } } } }

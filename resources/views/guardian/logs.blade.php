@@ -38,23 +38,23 @@
             <div class="gd-metrics">
                 <div class="gd-stat-card">
                     <div class="gd-stat-card__label">Total (24h)</div>
-                    <div class="gd-stat-card__value" x-text="Number(data.summary.total || 0).toLocaleString()"></div>
+                    <div class="gd-stat-card__value" x-text="Number(data?.summary?.total || 0).toLocaleString()"></div>
                 </div>
-                <div class="gd-stat-card" :class="{ 'gd-stat-card--alert': data.summary.emergency > 0 }">
+                <div class="gd-stat-card" :class="{ 'gd-stat-card--alert': data?.summary?.emergency > 0 }">
                     <div class="gd-stat-card__label">Emergency</div>
-                    <div class="gd-stat-card__value" style="color:#dc2626" x-text="Number(data.summary.emergency || 0).toLocaleString()"></div>
+                    <div class="gd-stat-card__value" style="color:#dc2626" x-text="Number(data?.summary?.emergency || 0).toLocaleString()"></div>
                 </div>
-                <div class="gd-stat-card" :class="{ 'gd-stat-card--alert': data.summary.critical > 0 }">
+                <div class="gd-stat-card" :class="{ 'gd-stat-card--alert': data?.summary?.critical > 0 }">
                     <div class="gd-stat-card__label">Critical</div>
-                    <div class="gd-stat-card__value" style="color:#dc2626" x-text="Number(data.summary.critical || 0).toLocaleString()"></div>
+                    <div class="gd-stat-card__value" style="color:#dc2626" x-text="Number(data?.summary?.critical || 0).toLocaleString()"></div>
                 </div>
-                <div class="gd-stat-card" :class="{ 'gd-stat-card--alert': data.summary.error > 0 }">
+                <div class="gd-stat-card" :class="{ 'gd-stat-card--alert': data?.summary?.error > 0 }">
                     <div class="gd-stat-card__label">Error</div>
-                    <div class="gd-stat-card__value" style="color:#ea580c" x-text="Number(data.summary.error || 0).toLocaleString()"></div>
+                    <div class="gd-stat-card__value" style="color:#ea580c" x-text="Number(data?.summary?.error || 0).toLocaleString()"></div>
                 </div>
                 <div class="gd-stat-card">
                     <div class="gd-stat-card__label">Warning</div>
-                    <div class="gd-stat-card__value" style="color:#f59e0b" x-text="Number(data.summary.warning || 0).toLocaleString()"></div>
+                    <div class="gd-stat-card__value" style="color:#f59e0b" x-text="Number(data?.summary?.warning || 0).toLocaleString()"></div>
                 </div>
             </div>
 
@@ -82,13 +82,13 @@
             <div class="gd-card">
                 <div class="gd-card__header">Log Entries</div>
                 <div class="gd-card__body" style="padding:0">
-                    <template x-if="(data.logs.data || []).length === 0">
+                    <template x-if="(data?.logs?.data || []).length === 0">
                         <div class="gd-empty">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                             <div class="gd-empty__text">No log entries found matching your filters</div>
                         </div>
                     </template>
-                    <template x-if="(data.logs.data || []).length > 0">
+                    <template x-if="(data?.logs?.data || []).length > 0">
                         <div class="gd-table-wrapper">
                             <table class="gd-table">
                                 <thead>
@@ -101,7 +101,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <template x-for="log in (data.logs.data || [])" :key="log.id">
+                                    <template x-for="log in (data?.logs?.data || [])" :key="log.id">
                                         <tr>
                                             <td style="white-space:nowrap;" x-text="formatDate(log.created_at)"></td>
                                             <td>
@@ -157,18 +157,18 @@
                     </template>
 
                     <!-- Pagination -->
-                    <template x-if="data.logs.last_page > 1">
+                    <template x-if="data?.logs?.last_page > 1">
                         <div class="gd-pagination">
-                            <span x-text="`Showing ${data.logs.from}-${data.logs.to} of ${data.logs.total}`"></span>
+                            <span x-text="`Showing ${data?.logs?.from}-${data?.logs?.to} of ${data?.logs?.total}`"></span>
                             <div class="gd-pagination__links">
-                                <button class="gd-pagination__link" :disabled="!data.logs.prev_page_url" @click="goToPage(data.logs.current_page - 1)">Prev</button>
-                                <button class="gd-pagination__link" :disabled="!data.logs.next_page_url" @click="goToPage(data.logs.current_page + 1)">Next</button>
+                                <button class="gd-pagination__link" :disabled="!data?.logs?.prev_page_url" @click="goToPage(data?.logs?.current_page - 1)">Prev</button>
+                                <button class="gd-pagination__link" :disabled="!data?.logs?.next_page_url" @click="goToPage(data?.logs?.current_page + 1)">Next</button>
                             </div>
                         </div>
                     </template>
                 </div>
             </div>
-    </template>
+    </div><!-- end captured logs loaded -->
 
     <!-- Toast notification -->
     <div x-show="copyToast" x-transition class="gd-toast">Copied as Markdown!</div>
@@ -379,7 +379,7 @@ function logsPage() {
 
             // Level distribution doughnut
             const levelCtx = this.$refs.levelChart;
-            if (levelCtx && this.data.by_level) {
+            if (levelCtx && this.data?.by_level) {
                 const levelColors = {
                     emergency: '#dc2626',
                     alert: '#dc2626',
@@ -390,7 +390,7 @@ function logsPage() {
                     info: '#3b82f6',
                     debug: '#8b5cf6',
                 };
-                const levels = this.data.by_level;
+                const levels = this.data?.by_level;
                 this.charts.level = SafeChart(levelCtx, {
                     type: 'doughnut',
                     data: {
@@ -412,7 +412,7 @@ function logsPage() {
 
             // Hourly trend stacked bar
             const trendCtx = this.$refs.trendChart;
-            if (trendCtx && this.data.trend) {
+            if (trendCtx && this.data?.trend) {
                 const levelColors = {
                     emergency: '#dc2626',
                     alert: '#dc2626',
@@ -423,13 +423,13 @@ function logsPage() {
                     info: '#3b82f6',
                     debug: '#8b5cf6',
                 };
-                const hours = [...new Set(this.data.trend.map(d => d.hour))].sort();
-                const uniqueLevels = [...new Set(this.data.trend.map(d => d.level))];
+                const hours = [...new Set(this.data?.trend.map(d => d.hour))].sort();
+                const uniqueLevels = [...new Set(this.data?.trend.map(d => d.level))];
 
                 const datasets = uniqueLevels.map(level => ({
                     label: level,
                     data: hours.map(h => {
-                        const item = this.data.trend.find(d => d.hour === h && d.level === level);
+                        const item = this.data?.trend.find(d => d.hour === h && d.level === level);
                         return item ? item.count : 0;
                     }),
                     backgroundColor: (levelColors[level] || '#64748b') + '80',

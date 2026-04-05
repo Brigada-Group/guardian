@@ -47,7 +47,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <template x-for="log in (data.logs.data || [])" :key="log.id">
+                                <template x-for="log in (data?.logs?.data || [])" :key="log.id">
                                     <tr>
                                         <td x-text="formatDate(log.created_at)"></td>
                                         <td class="gd-mono gd-truncate" x-text="log.mailable || '-'"></td>
@@ -59,12 +59,12 @@
                             </tbody>
                         </table>
                     </div>
-                    <template x-if="data.logs.last_page > 1">
+                    <template x-if="data?.logs?.last_page > 1">
                         <div class="gd-pagination">
-                            <span x-text="`Showing ${data.logs.from}-${data.logs.to} of ${data.logs.total}`"></span>
+                            <span x-text="`Showing ${data?.logs?.from}-${data?.logs?.to} of ${data?.logs?.total}`"></span>
                             <div class="gd-pagination__links">
-                                <button class="gd-pagination__link" :disabled="!data.logs.prev_page_url" @click="goToPage(data.logs.current_page - 1)">Prev</button>
-                                <button class="gd-pagination__link" :disabled="!data.logs.next_page_url" @click="goToPage(data.logs.current_page + 1)">Next</button>
+                                <button class="gd-pagination__link" :disabled="!data?.logs?.prev_page_url" @click="goToPage(data?.logs?.current_page - 1)">Prev</button>
+                                <button class="gd-pagination__link" :disabled="!data?.logs?.next_page_url" @click="goToPage(data?.logs?.current_page + 1)">Next</button>
                             </div>
                         </div>
                     </template>
@@ -122,16 +122,16 @@ function mailPage() {
             const isDark = document.documentElement.classList.contains('gd-dark');
             const colors = getChartColors(isDark);
             const ctx = this.$refs.dailyChart;
-            if (!ctx || !this.data.daily_chart) return;
+            if (!ctx || !this.data?.daily_chart) return;
 
             // Group by day and status
-            const days = [...new Set(this.data.daily_chart.map(d => d.day))].sort();
+            const days = [...new Set(this.data?.daily_chart.map(d => d.day))].sort();
             const sentData = days.map(day => {
-                const item = this.data.daily_chart.find(d => d.day === day && d.status === 'sent');
+                const item = this.data?.daily_chart.find(d => d.day === day && d.status === 'sent');
                 return item ? item.count : 0;
             });
             const failedData = days.map(day => {
-                const item = this.data.daily_chart.find(d => d.day === day && d.status === 'failed');
+                const item = this.data?.daily_chart.find(d => d.day === day && d.status === 'failed');
                 return item ? item.count : 0;
             });
 

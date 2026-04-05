@@ -36,7 +36,7 @@
                         <table class="gd-table">
                             <thead><tr><th>Host</th><th>Avg Time</th><th>Requests</th><th>Failures</th></tr></thead>
                             <tbody>
-                                <template x-for="h in (data.by_host || [])" :key="h.host">
+                                <template x-for="h in (data?.by_host || [])" :key="h.host">
                                     <tr>
                                         <td class="gd-mono" x-text="h.host"></td>
                                         <td x-text="formatMs(h.avg_ms)"></td>
@@ -69,7 +69,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <template x-for="log in (data.logs.data || [])" :key="log.id">
+                                <template x-for="log in (data?.logs?.data || [])" :key="log.id">
                                     <tr>
                                         <td x-text="formatDate(log.created_at)"></td>
                                         <td><span class="gd-badge gd-badge--info" x-text="log.method"></span></td>
@@ -84,12 +84,12 @@
                             </tbody>
                         </table>
                     </div>
-                    <template x-if="data.logs.last_page > 1">
+                    <template x-if="data?.logs?.last_page > 1">
                         <div class="gd-pagination">
-                            <span x-text="`Showing ${data.logs.from}-${data.logs.to} of ${data.logs.total}`"></span>
+                            <span x-text="`Showing ${data?.logs?.from}-${data?.logs?.to} of ${data?.logs?.total}`"></span>
                             <div class="gd-pagination__links">
-                                <button class="gd-pagination__link" :disabled="!data.logs.prev_page_url" @click="goToPage(data.logs.current_page - 1)">Prev</button>
-                                <button class="gd-pagination__link" :disabled="!data.logs.next_page_url" @click="goToPage(data.logs.current_page + 1)">Next</button>
+                                <button class="gd-pagination__link" :disabled="!data?.logs?.prev_page_url" @click="goToPage(data?.logs?.current_page - 1)">Prev</button>
+                                <button class="gd-pagination__link" :disabled="!data?.logs?.next_page_url" @click="goToPage(data?.logs?.current_page + 1)">Next</button>
                             </div>
                         </div>
                     </template>
@@ -148,14 +148,14 @@ function outgoingHttpPage() {
             const isDark = document.documentElement.classList.contains('gd-dark');
             const colors = getChartColors(isDark);
             const ctx = this.$refs.hostChart;
-            if (ctx && this.data.by_host) {
+            if (ctx && this.data?.by_host) {
                 this.charts.host = SafeChart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: this.data.by_host.map(h => h.host),
+                        labels: this.data?.by_host.map(h => h.host),
                         datasets: [
-                            { label: 'Avg Time (ms)', data: this.data.by_host.map(h => Math.round(h.avg_ms)), backgroundColor: colors.blue + '80', borderRadius: 4 },
-                            { label: 'Failures', data: this.data.by_host.map(h => h.failures), backgroundColor: colors.red + '80', borderRadius: 4 },
+                            { label: 'Avg Time (ms)', data: this.data?.by_host.map(h => Math.round(h.avg_ms)), backgroundColor: colors.blue + '80', borderRadius: 4 },
+                            { label: 'Failures', data: this.data?.by_host.map(h => h.failures), backgroundColor: colors.red + '80', borderRadius: 4 },
                         ]
                     },
                     options: {

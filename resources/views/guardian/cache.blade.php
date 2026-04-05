@@ -13,9 +13,9 @@
             <div class="gd-metrics">
                 <div class="gd-stat-card">
                     <div class="gd-stat-card__label">Current Hit Rate</div>
-                    <div class="gd-stat-card__value" x-text="Number(data.current_hit_rate).toFixed(1) + '%'"></div>
+                    <div class="gd-stat-card__value" x-text="Number(data?.current_hit_rate).toFixed(1) + '%'"></div>
                 </div>
-                <template x-for="store in (data.by_store || [])" :key="store.store">
+                <template x-for="store in (data?.by_store || [])" :key="store.store">
                     <div class="gd-stat-card">
                         <div class="gd-stat-card__label" x-text="store.store + ' Hit Rate'"></div>
                         <div class="gd-stat-card__value" x-text="Number(store.avg_hit_rate || 0).toFixed(1) + '%'"></div>
@@ -154,16 +154,16 @@ function cachePage() {
 
             // Store breakdown
             const stCtx = this.$refs.storeChart;
-            if (stCtx && this.data.by_store) {
+            if (stCtx && this.data?.by_store) {
                 const palette = [colors.blue, colors.green, colors.yellow, colors.purple, colors.cyan];
                 this.charts.store = SafeChart(stCtx, {
                     type: 'bar',
                     data: {
-                        labels: this.data.by_store.map(s => s.store),
+                        labels: this.data?.by_store.map(s => s.store),
                         datasets: [
-                            { label: 'Hits', data: this.data.by_store.map(s => s.total_hits), backgroundColor: colors.green + '80', borderRadius: 3 },
-                            { label: 'Misses', data: this.data.by_store.map(s => s.total_misses), backgroundColor: colors.red + '60', borderRadius: 3 },
-                            { label: 'Writes', data: this.data.by_store.map(s => s.total_writes), backgroundColor: colors.blue + '60', borderRadius: 3 },
+                            { label: 'Hits', data: this.data?.by_store.map(s => s.total_hits), backgroundColor: colors.green + '80', borderRadius: 3 },
+                            { label: 'Misses', data: this.data?.by_store.map(s => s.total_misses), backgroundColor: colors.red + '60', borderRadius: 3 },
+                            { label: 'Writes', data: this.data?.by_store.map(s => s.total_writes), backgroundColor: colors.blue + '60', borderRadius: 3 },
                         ]
                     },
                     options: {
@@ -179,7 +179,7 @@ function cachePage() {
             // Gauge chart
             const gCtx = this.$refs.gaugeChart;
             if (gCtx) {
-                const rate = Number(this.data.current_hit_rate || 0);
+                const rate = Number(this.data?.current_hit_rate || 0);
                 this.charts.gauge = SafeChart(gCtx, {
                     type: 'doughnut',
                     data: {

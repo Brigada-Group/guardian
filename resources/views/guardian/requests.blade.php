@@ -43,7 +43,7 @@
                         <table class="gd-table">
                             <thead><tr><th>Route</th><th>Avg Time</th><th>Count</th></tr></thead>
                             <tbody>
-                                <template x-for="ep in data.slowest" :key="ep.route_name">
+                                <template x-for="ep in data?.slowest" :key="ep.route_name">
                                     <tr>
                                         <td class="gd-mono gd-truncate" x-text="ep.route_name"></td>
                                         <td x-text="formatMs(ep.avg_ms)"></td>
@@ -73,7 +73,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <template x-for="log in (data.logs.data || [])" :key="log.id">
+                                <template x-for="log in (data?.logs?.data || [])" :key="log.id">
                                     <tr>
                                         <td x-text="formatDate(log.created_at)"></td>
                                         <td><span class="gd-badge gd-badge--info" x-text="log.method"></span></td>
@@ -89,12 +89,12 @@
                         </table>
                     </div>
                     <!-- Pagination -->
-                    <template x-if="data.logs.last_page > 1">
+                    <template x-if="data?.logs?.last_page > 1">
                         <div class="gd-pagination">
-                            <span x-text="`Showing ${data.logs.from}-${data.logs.to} of ${data.logs.total}`"></span>
+                            <span x-text="`Showing ${data?.logs?.from}-${data?.logs?.to} of ${data?.logs?.total}`"></span>
                             <div class="gd-pagination__links">
-                                <button class="gd-pagination__link" :disabled="!data.logs.prev_page_url" @click="goToPage(data.logs.current_page - 1)">Prev</button>
-                                <button class="gd-pagination__link" :disabled="!data.logs.next_page_url" @click="goToPage(data.logs.current_page + 1)">Next</button>
+                                <button class="gd-pagination__link" :disabled="!data?.logs?.prev_page_url" @click="goToPage(data?.logs?.current_page - 1)">Prev</button>
+                                <button class="gd-pagination__link" :disabled="!data?.logs?.next_page_url" @click="goToPage(data?.logs?.current_page + 1)">Next</button>
                             </div>
                         </div>
                     </template>
@@ -153,8 +153,8 @@ function requestsPage() {
             const isDark = document.documentElement.classList.contains('gd-dark');
             const colors = getChartColors(isDark);
             const ctx = this.$refs.histogramChart;
-            if (ctx && this.data.histogram) {
-                const h = this.data.histogram;
+            if (ctx && this.data?.histogram) {
+                const h = this.data?.histogram;
                 this.charts.histogram = SafeChart(ctx, {
                     type: 'bar',
                     data: {

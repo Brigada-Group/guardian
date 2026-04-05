@@ -28,19 +28,19 @@
             <div class="gd-metrics">
                 <div class="gd-stat-card">
                     <div class="gd-stat-card__label">Total Jobs (24h)</div>
-                    <div class="gd-stat-card__value" x-text="Number(data.summary.total || 0).toLocaleString()"></div>
+                    <div class="gd-stat-card__value" x-text="Number(data?.summary?.total || 0).toLocaleString()"></div>
                 </div>
                 <div class="gd-stat-card">
                     <div class="gd-stat-card__label">Completed</div>
-                    <div class="gd-stat-card__value" style="color:var(--gd-success)" x-text="Number(data.summary.completed || 0).toLocaleString()"></div>
+                    <div class="gd-stat-card__value" style="color:var(--gd-success)" x-text="Number(data?.summary?.completed || 0).toLocaleString()"></div>
                 </div>
-                <div class="gd-stat-card" :class="{ 'gd-stat-card--alert': data.summary.failed > 0 }">
+                <div class="gd-stat-card" :class="{ 'gd-stat-card--alert': data?.summary?.failed > 0 }">
                     <div class="gd-stat-card__label">Failed</div>
-                    <div class="gd-stat-card__value" style="color:var(--gd-danger)" x-text="Number(data.summary.failed || 0).toLocaleString()"></div>
+                    <div class="gd-stat-card__value" style="color:var(--gd-danger)" x-text="Number(data?.summary?.failed || 0).toLocaleString()"></div>
                 </div>
                 <div class="gd-stat-card">
                     <div class="gd-stat-card__label">Avg Duration</div>
-                    <div class="gd-stat-card__value" x-text="formatMs(data.summary.avg_duration)"></div>
+                    <div class="gd-stat-card__value" x-text="formatMs(data?.summary?.avg_duration)"></div>
                 </div>
             </div>
 
@@ -57,13 +57,13 @@
                 <div class="gd-card">
                     <div class="gd-card__header">Top Failed Jobs (24h)</div>
                     <div class="gd-card__body" style="padding:0">
-                        <template x-if="(data.top_failed || []).length === 0">
+                        <template x-if="(data?.top_failed || []).length === 0">
                             <div class="gd-empty">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                                 <div class="gd-empty__text">No failed jobs in the last 24 hours</div>
                             </div>
                         </template>
-                        <template x-if="(data.top_failed || []).length > 0">
+                        <template x-if="(data?.top_failed || []).length > 0">
                             <div class="gd-table-wrapper">
                                 <table class="gd-table">
                                     <thead>
@@ -73,7 +73,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <template x-for="job in (data.top_failed || [])" :key="job.job_class">
+                                        <template x-for="job in (data?.top_failed || [])" :key="job.job_class">
                                             <tr>
                                                 <td class="gd-mono gd-truncate" x-text="shortClass(job.job_class)"></td>
                                                 <td><span class="gd-badge gd-badge--danger" x-text="job.fail_count"></span></td>
@@ -91,13 +91,13 @@
             <div class="gd-card">
                 <div class="gd-card__header">Job Log</div>
                 <div class="gd-card__body" style="padding:0">
-                    <template x-if="(data.logs.data || []).length === 0">
+                    <template x-if="(data?.logs?.data || []).length === 0">
                         <div class="gd-empty">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
                             <div class="gd-empty__text">No queue jobs found matching your filters</div>
                         </div>
                     </template>
-                    <template x-if="(data.logs.data || []).length > 0">
+                    <template x-if="(data?.logs?.data || []).length > 0">
                         <div class="gd-table-wrapper">
                             <table class="gd-table">
                                 <thead>
@@ -112,7 +112,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <template x-for="log in (data.logs.data || [])" :key="log.id">
+                                    <template x-for="log in (data?.logs?.data || [])" :key="log.id">
                                         <tr>
                                             <td style="white-space:nowrap;" x-text="formatDate(log.created_at)"></td>
                                             <td class="gd-mono gd-truncate" style="max-width:250px;" x-text="shortClass(log.job_class)"></td>
@@ -188,12 +188,12 @@
                     </template>
 
                     <!-- Pagination -->
-                    <template x-if="data.logs.last_page > 1">
+                    <template x-if="data?.logs?.last_page > 1">
                         <div class="gd-pagination">
-                            <span x-text="`Showing ${data.logs.from}-${data.logs.to} of ${data.logs.total}`"></span>
+                            <span x-text="`Showing ${data?.logs?.from}-${data?.logs?.to} of ${data?.logs?.total}`"></span>
                             <div class="gd-pagination__links">
-                                <button class="gd-pagination__link" :disabled="!data.logs.prev_page_url" @click="goToPage(data.logs.current_page - 1)">Prev</button>
-                                <button class="gd-pagination__link" :disabled="!data.logs.next_page_url" @click="goToPage(data.logs.current_page + 1)">Next</button>
+                                <button class="gd-pagination__link" :disabled="!data?.logs?.prev_page_url" @click="goToPage(data?.logs?.current_page - 1)">Prev</button>
+                                <button class="gd-pagination__link" :disabled="!data?.logs?.next_page_url" @click="goToPage(data?.logs?.current_page + 1)">Next</button>
                             </div>
                         </div>
                     </template>
@@ -315,14 +315,14 @@ function queuePage() {
 
             // Throughput chart
             const ctx = this.$refs.throughputChart;
-            if (ctx && this.data.throughput) {
-                const hours = [...new Set(this.data.throughput.map(d => d.hour))].sort();
+            if (ctx && this.data?.throughput) {
+                const hours = [...new Set(this.data?.throughput.map(d => d.hour))].sort();
                 const completedData = hours.map(h => {
-                    const item = this.data.throughput.find(d => d.hour === h && d.status === 'completed');
+                    const item = this.data?.throughput.find(d => d.hour === h && d.status === 'completed');
                     return item ? item.count : 0;
                 });
                 const failedData = hours.map(h => {
-                    const item = this.data.throughput.find(d => d.hour === h && d.status === 'failed');
+                    const item = this.data?.throughput.find(d => d.hour === h && d.status === 'failed');
                     return item ? item.count : 0;
                 });
 

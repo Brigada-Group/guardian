@@ -96,7 +96,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <template x-for="alert in data.alerts.data" :key="alert.id">
+                                    <template x-for="alert in data?.alerts?.data" :key="alert.id">
                                         <tr>
                                             <td style="white-space:nowrap; font-size:12px; color:var(--tw-text-opacity, #64748b);" x-text="formatDate(alert.notified_at || alert.created_at)"></td>
                                             <td>
@@ -193,12 +193,12 @@
                         </template>
 
                         <!-- Pagination -->
-                        <template x-if="data.alerts.last_page > 1">
+                        <template x-if="data?.alerts?.last_page > 1">
                             <div class="gd-pagination">
-                                <span x-text="`Showing ${data.alerts.from}-${data.alerts.to} of ${data.alerts.total}`"></span>
+                                <span x-text="`Showing ${data?.alerts?.from}-${data?.alerts?.to} of ${data?.alerts?.total}`"></span>
                                 <div class="gd-pagination__links">
-                                    <button class="gd-pagination__link" :disabled="!data.alerts.prev_page_url" @click="goToPage(data.alerts.current_page - 1)">Prev</button>
-                                    <button class="gd-pagination__link" :disabled="!data.alerts.next_page_url" @click="goToPage(data.alerts.current_page + 1)">Next</button>
+                                    <button class="gd-pagination__link" :disabled="!data?.alerts?.prev_page_url" @click="goToPage(data?.alerts?.current_page - 1)">Prev</button>
+                                    <button class="gd-pagination__link" :disabled="!data?.alerts?.next_page_url" @click="goToPage(data?.alerts?.current_page + 1)">Next</button>
                                 </div>
                             </div>
                         </template>
