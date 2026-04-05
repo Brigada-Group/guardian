@@ -141,7 +141,7 @@ function overviewPage() {
             if (this.charts.responseTime) this.charts.responseTime.destroy();
             const rtCtx = this.$refs.responseTimeChart;
             if (rtCtx) {
-                this.charts.responseTime = new Chart(rtCtx, {
+                this.charts.responseTime = SafeChart(rtCtx, {
                     type: 'line',
                     data: {
                         labels: (this.data.response_time_chart || []).map(d => formatDateShort(d.hour)),
@@ -168,7 +168,7 @@ function overviewPage() {
             if (this.charts.error) this.charts.error.destroy();
             const errCtx = this.$refs.errorChart;
             if (errCtx) {
-                this.charts.error = new Chart(errCtx, {
+                this.charts.error = SafeChart(errCtx, {
                     type: 'bar',
                     data: {
                         labels: (this.data.error_chart || []).map(d => formatDateShort(d.hour)),

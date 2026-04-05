@@ -523,6 +523,24 @@
             };
         }
 
+        // Patch Chart.js to handle null/destroyed canvas gracefully
+        if (typeof Chart !== 'undefined') {
+            const OrigChart = Chart;
+            const patchedConstruct = function(ctx, config) {
+                if (!ctx || !ctx.getContext) {
+                    console.warn('Guardian: skipped chart render — canvas not available');
+                    return { destroy() {}, update() {}, data: { labels: [], datasets: [] } };
+                }
+                return new OrigChart(ctx, config);
+            };
+            // Also wrap destroy to be safe
+            const origDestroy = OrigChart.prototype.destroy;
+            OrigChart.prototype.destroy = function() {
+                try { origDestroy.call(this); } catch(e) {}
+            };
+            window.SafeChart = patchedConstruct;
+        }
+
         function statusBadgeClass(status) {
             const map = { ok: 'gd-badge--ok', success: 'gd-badge--success', warning: 'gd-badge--warning', critical: 'gd-badge--critical', failed: 'gd-badge--failed', danger: 'gd-badge--danger', info: 'gd-badge--info' };
             return map[status] || 'gd-badge--unknown';

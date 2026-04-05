@@ -110,9 +110,10 @@ class DashboardController extends Controller
             $exceptionCount = GuardianResult::where('created_at', '>=', $since24h)->where('check_class', 'like', 'exception:%')->count();
 
             // Hourly response time chart
+            $h = $this->hourGroupExpr();
             $responseTimeChart = RequestLog::where('created_at', '>=', $since24h)
-                ->selectRaw("strftime('%Y-%m-%d %H:00', created_at) as hour, AVG(duration_ms) as avg_ms, COUNT(*) as count")
-                ->groupByRaw("strftime('%Y-%m-%d %H:00', created_at)")
+                ->selectRaw("{$h['select']}, AVG(duration_ms) as avg_ms, COUNT(*) as count")
+                ->groupByRaw($h['group'])
                 ->orderBy('hour')
                 ->take(24)
                 ->get();
@@ -120,8 +121,8 @@ class DashboardController extends Controller
             // Hourly error chart
             $errorChart = RequestLog::where('created_at', '>=', $since24h)
                 ->where('status_code', '>=', 500)
-                ->selectRaw("strftime('%Y-%m-%d %H:00', created_at) as hour, COUNT(*) as count")
-                ->groupByRaw("strftime('%Y-%m-%d %H:00', created_at)")
+                ->selectRaw("{$h['select']}, COUNT(*) as count")
+                ->groupByRaw($h['group'])
                 ->orderBy('hour')
                 ->take(24)
                 ->get();
@@ -222,10 +223,11 @@ class DashboardController extends Controller
 
             // Slow query trend (hourly)
             $since24h = now()->subHours(24);
+            $h = $this->hourGroupExpr();
             $trend = QueryLog::where('created_at', '>=', $since24h)
                 ->where('is_slow', true)
-                ->selectRaw("strftime('%Y-%m-%d %H:00', created_at) as hour, COUNT(*) as count")
-                ->groupByRaw("strftime('%Y-%m-%d %H:00', created_at)")
+                ->selectRaw("{$h['select']}, COUNT(*) as count")
+                ->groupByRaw($h['group'])
                 ->orderBy('hour')
                 ->take(24)
                 ->get();
@@ -317,9 +319,10 @@ class DashboardController extends Controller
             $logs = (clone $query)->latest('created_at')->paginate($perPage);
 
             // Daily chart
-            $dailyChart = MailLog::selectRaw("strftime('%Y-%m-%d', created_at) as day, status, COUNT(*) as count")
+            $d = $this->dayGroupExpr();
+            $dailyChart = MailLog::selectRaw("{$d['select']}, status, COUNT(*) as count")
                 ->where('created_at', '>=', now()->subDays(30))
-                ->groupByRaw("strftime('%Y-%m-%d', created_at), status")
+                ->groupByRaw("{$d['group']}, status")
                 ->orderBy('day')
                 ->take(60)
                 ->get();
@@ -405,10 +408,11 @@ class DashboardController extends Controller
                 ->paginate($perPage);
 
             // Trend (hourly, last 48h)
+            $h = $this->hourGroupExpr();
             $trend = GuardianResult::where('check_class', 'like', 'exception:%')
                 ->where('created_at', '>=', now()->subHours(48))
-                ->selectRaw("strftime('%Y-%m-%d %H:00', created_at) as hour, COUNT(*) as count")
-                ->groupByRaw("strftime('%Y-%m-%d %H:00', created_at)")
+                ->selectRaw("{$h['select']}, COUNT(*) as count")
+                ->groupByRaw($h['group'])
                 ->orderBy('hour')
                 ->take(48)
                 ->get();
@@ -423,18 +427,25 @@ class DashboardController extends Controller
     {
         try {
             $registry = app(CheckRegistry::class);
+
+            // Single query: get latest result per check_class
+            $checkClasses = collect($registry->all())->map(fn ($c) => get_class($c))->all();
+            $latestResults = GuardianResult::whereIn('check_class', $checkClasses)
+                ->selectRaw('check_class, status, message, MAX(created_at) as created_at')
+                ->groupBy('check_class', 'status', 'message')
+                ->get()
+                ->keyBy('check_class');
+
             $checks = [];
             foreach ($registry->all() as $check) {
-                $latest = GuardianResult::where('check_class', get_class($check))
-                    ->latest('created_at')
-                    ->first();
+                $latest = $latestResults->get(get_class($check));
                 $checks[] = [
                     'name' => $check->name(),
                     'class' => get_class($check),
                     'schedule' => $check->schedule()->value,
                     'status' => $latest?->status ?? 'unknown',
                     'message' => $latest?->message ?? 'Never run',
-                    'last_run' => $latest?->created_at?->toIso8601String(),
+                    'last_run' => $latest?->created_at,
                 ];
             }
 
@@ -472,6 +483,34 @@ class DashboardController extends Controller
     }
 
     // --- Helpers ---
+
+    private function hourGroupExpr(): array
+    {
+        $driver = config('database.default');
+        $connection = config("database.connections.{$driver}.driver", 'mysql');
+
+        if ($connection === 'sqlite') {
+            $expr = "strftime('%Y-%m-%d %H:00', created_at)";
+        } else {
+            $expr = "DATE_FORMAT(created_at, '%Y-%m-%d %H:00')";
+        }
+
+        return ['select' => $expr . ' as hour', 'group' => $expr];
+    }
+
+    private function dayGroupExpr(): array
+    {
+        $driver = config('database.default');
+        $connection = config("database.connections.{$driver}.driver", 'mysql');
+
+        if ($connection === 'sqlite') {
+            $expr = "strftime('%Y-%m-%d', created_at)";
+        } else {
+            $expr = "DATE_FORMAT(created_at, '%Y-%m-%d')";
+        }
+
+        return ['select' => $expr . ' as day', 'group' => $expr];
+    }
 
     private function apiResponse(array $data): JsonResponse
     {

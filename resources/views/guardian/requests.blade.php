@@ -158,7 +158,7 @@ function requestsPage() {
             const ctx = this.$refs.histogramChart;
             if (ctx && this.data.histogram) {
                 const h = this.data.histogram;
-                this.charts.histogram = new Chart(ctx, {
+                this.charts.histogram = SafeChart(ctx, {
                     type: 'bar',
                     data: {
                         labels: Object.keys(h),

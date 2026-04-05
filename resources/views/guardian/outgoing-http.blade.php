@@ -150,7 +150,7 @@ function outgoingHttpPage() {
             if (this.charts.host) this.charts.host.destroy();
             const ctx = this.$refs.hostChart;
             if (ctx && this.data.by_host) {
-                this.charts.host = new Chart(ctx, {
+                this.charts.host = SafeChart(ctx, {
                     type: 'bar',
                     data: {
                         labels: this.data.by_host.map(h => h.host),

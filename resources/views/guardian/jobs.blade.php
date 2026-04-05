@@ -159,7 +159,7 @@ function jobsPage() {
 
             if (this.tab === 'commands' && this.data.exit_codes) {
                 const items = this.data.exit_codes;
-                this.charts.breakdown = new Chart(ctx, {
+                this.charts.breakdown = SafeChart(ctx, {
                     type: 'doughnut',
                     data: {
                         labels: items.map(i => 'Exit ' + i.exit_code),
@@ -173,7 +173,7 @@ function jobsPage() {
             } else if (this.tab === 'scheduled' && this.data.status_breakdown) {
                 const items = this.data.status_breakdown;
                 const colorMap = { finished: colors.green, failed: colors.red, skipped: colors.yellow, starting: colors.blue };
-                this.charts.breakdown = new Chart(ctx, {
+                this.charts.breakdown = SafeChart(ctx, {
                     type: 'doughnut',
                     data: {
                         labels: items.map(i => i.status),

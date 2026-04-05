@@ -150,7 +150,7 @@ function notificationsPage() {
             if (!ctx || !this.data.by_channel) return;
 
             const palette = [colors.blue, colors.green, colors.yellow, colors.purple, colors.cyan, colors.red];
-            this.charts.channel = new Chart(ctx, {
+            this.charts.channel = SafeChart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: this.data.by_channel.map(c => c.channel),

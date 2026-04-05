@@ -134,7 +134,7 @@ function cachePage() {
             const hrCtx = this.$refs.hitRateChart;
             if (hrCtx && this.data.logs) {
                 const logs = [...this.data.logs].reverse().slice(-50);
-                this.charts.hitRate = new Chart(hrCtx, {
+                this.charts.hitRate = SafeChart(hrCtx, {
                     type: 'line',
                     data: {
                         labels: logs.map(l => formatDateShort(l.created_at)),
@@ -160,7 +160,7 @@ function cachePage() {
             const stCtx = this.$refs.storeChart;
             if (stCtx && this.data.by_store) {
                 const palette = [colors.blue, colors.green, colors.yellow, colors.purple, colors.cyan];
-                this.charts.store = new Chart(stCtx, {
+                this.charts.store = SafeChart(stCtx, {
                     type: 'bar',
                     data: {
                         labels: this.data.by_store.map(s => s.store),
@@ -185,7 +185,7 @@ function cachePage() {
             const gCtx = this.$refs.gaugeChart;
             if (gCtx) {
                 const rate = Number(this.data.current_hit_rate || 0);
-                this.charts.gauge = new Chart(gCtx, {
+                this.charts.gauge = SafeChart(gCtx, {
                     type: 'doughnut',
                     data: {
                         datasets: [{

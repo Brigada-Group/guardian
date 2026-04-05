@@ -141,7 +141,7 @@ function queriesPage() {
             if (this.charts.trend) this.charts.trend.destroy();
             const ctx = this.$refs.trendChart;
             if (ctx && this.data.trend) {
-                this.charts.trend = new Chart(ctx, {
+                this.charts.trend = SafeChart(ctx, {
                     type: 'line',
                     data: {
                         labels: this.data.trend.map(d => formatDateShort(d.hour)),

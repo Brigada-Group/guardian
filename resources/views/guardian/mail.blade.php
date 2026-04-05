@@ -138,7 +138,7 @@ function mailPage() {
                 return item ? item.count : 0;
             });
 
-            this.charts.daily = new Chart(ctx, {
+            this.charts.daily = SafeChart(ctx, {
                 type: 'bar',
                 data: {
                     labels: days,
