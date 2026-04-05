@@ -12,7 +12,7 @@
     </div>
 
     <template x-if="loading && !data">
-        <div class="gd-loading"><div class="gd-spinner"></div> Loading exception data...</div>
+        <div class="gd-skeleton-grid"><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--chart"></div></div>
     </template>
 
     <template x-if="data">

@@ -5,22 +5,22 @@
 @section('content')
 <div x-data="cachePage()" x-init="init()">
     <template x-if="loading && !data">
-        <div class="gd-loading"><div class="gd-spinner"></div> Loading cache data...</div>
+        <div class="gd-skeleton-grid"><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--chart"></div></div>
     </template>
 
     <template x-if="data">
         <div>
             <!-- Top metrics -->
             <div class="gd-metrics">
-                <div class="gd-metric-card">
-                    <div class="gd-metric-card__label">Current Hit Rate</div>
-                    <div class="gd-metric-card__value" x-text="Number(data.current_hit_rate).toFixed(1) + '%'"></div>
+                <div class="gd-stat-card">
+                    <div class="gd-stat-card__label">Current Hit Rate</div>
+                    <div class="gd-stat-card__value" x-text="Number(data.current_hit_rate).toFixed(1) + '%'"></div>
                 </div>
                 <template x-for="store in (data.by_store || [])" :key="store.store">
-                    <div class="gd-metric-card">
-                        <div class="gd-metric-card__label" x-text="store.store + ' Hit Rate'"></div>
-                        <div class="gd-metric-card__value" x-text="Number(store.avg_hit_rate || 0).toFixed(1) + '%'"></div>
-                        <div class="gd-metric-card__subtitle" x-text="'Hits: ' + Number(store.total_hits || 0).toLocaleString() + ' / Misses: ' + Number(store.total_misses || 0).toLocaleString()"></div>
+                    <div class="gd-stat-card">
+                        <div class="gd-stat-card__label" x-text="store.store + ' Hit Rate'"></div>
+                        <div class="gd-stat-card__value" x-text="Number(store.avg_hit_rate || 0).toFixed(1) + '%'"></div>
+                        <div class="gd-stat-card__subtitle" x-text="'Hits: ' + Number(store.total_hits || 0).toLocaleString() + ' / Misses: ' + Number(store.total_misses || 0).toLocaleString()"></div>
                     </div>
                 </template>
             </div>

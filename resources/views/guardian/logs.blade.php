@@ -22,32 +22,32 @@
     </div>
 
     <template x-if="loading && !data">
-        <div class="gd-loading"><div class="gd-spinner"></div> Loading log data...</div>
+        <div class="gd-skeleton-grid"><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--chart"></div></div>
     </template>
 
     <template x-if="data">
         <div class="gd-fade-in">
             <!-- Metric cards -->
             <div class="gd-metrics">
-                <div class="gd-metric-card">
-                    <div class="gd-metric-card__label">Total (24h)</div>
-                    <div class="gd-metric-card__value" x-text="Number(data.summary.total || 0).toLocaleString()"></div>
+                <div class="gd-stat-card">
+                    <div class="gd-stat-card__label">Total (24h)</div>
+                    <div class="gd-stat-card__value" x-text="Number(data.summary.total || 0).toLocaleString()"></div>
                 </div>
-                <div class="gd-metric-card" :class="{ 'gd-metric-card--alert': data.summary.emergency > 0 }">
-                    <div class="gd-metric-card__label">Emergency</div>
-                    <div class="gd-metric-card__value" style="color:#dc2626" x-text="Number(data.summary.emergency || 0).toLocaleString()"></div>
+                <div class="gd-stat-card" :class="{ 'gd-stat-card--alert': data.summary.emergency > 0 }">
+                    <div class="gd-stat-card__label">Emergency</div>
+                    <div class="gd-stat-card__value" style="color:#dc2626" x-text="Number(data.summary.emergency || 0).toLocaleString()"></div>
                 </div>
-                <div class="gd-metric-card" :class="{ 'gd-metric-card--alert': data.summary.critical > 0 }">
-                    <div class="gd-metric-card__label">Critical</div>
-                    <div class="gd-metric-card__value" style="color:#dc2626" x-text="Number(data.summary.critical || 0).toLocaleString()"></div>
+                <div class="gd-stat-card" :class="{ 'gd-stat-card--alert': data.summary.critical > 0 }">
+                    <div class="gd-stat-card__label">Critical</div>
+                    <div class="gd-stat-card__value" style="color:#dc2626" x-text="Number(data.summary.critical || 0).toLocaleString()"></div>
                 </div>
-                <div class="gd-metric-card" :class="{ 'gd-metric-card--alert': data.summary.error > 0 }">
-                    <div class="gd-metric-card__label">Error</div>
-                    <div class="gd-metric-card__value" style="color:#ea580c" x-text="Number(data.summary.error || 0).toLocaleString()"></div>
+                <div class="gd-stat-card" :class="{ 'gd-stat-card--alert': data.summary.error > 0 }">
+                    <div class="gd-stat-card__label">Error</div>
+                    <div class="gd-stat-card__value" style="color:#ea580c" x-text="Number(data.summary.error || 0).toLocaleString()"></div>
                 </div>
-                <div class="gd-metric-card">
-                    <div class="gd-metric-card__label">Warning</div>
-                    <div class="gd-metric-card__value" style="color:#f59e0b" x-text="Number(data.summary.warning || 0).toLocaleString()"></div>
+                <div class="gd-stat-card">
+                    <div class="gd-stat-card__label">Warning</div>
+                    <div class="gd-stat-card__value" style="color:#f59e0b" x-text="Number(data.summary.warning || 0).toLocaleString()"></div>
                 </div>
             </div>
 

@@ -20,28 +20,28 @@
     </div>
 
     <template x-if="loading && !data">
-        <div class="gd-loading"><div class="gd-spinner"></div> Loading queue data...</div>
+        <div class="gd-skeleton-grid"><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--chart"></div></div>
     </template>
 
     <template x-if="data">
         <div class="gd-fade-in">
             <!-- Metric cards -->
             <div class="gd-metrics">
-                <div class="gd-metric-card">
-                    <div class="gd-metric-card__label">Total Jobs (24h)</div>
-                    <div class="gd-metric-card__value" x-text="Number(data.summary.total || 0).toLocaleString()"></div>
+                <div class="gd-stat-card">
+                    <div class="gd-stat-card__label">Total Jobs (24h)</div>
+                    <div class="gd-stat-card__value" x-text="Number(data.summary.total || 0).toLocaleString()"></div>
                 </div>
-                <div class="gd-metric-card">
-                    <div class="gd-metric-card__label">Completed</div>
-                    <div class="gd-metric-card__value" style="color:var(--gd-success)" x-text="Number(data.summary.completed || 0).toLocaleString()"></div>
+                <div class="gd-stat-card">
+                    <div class="gd-stat-card__label">Completed</div>
+                    <div class="gd-stat-card__value" style="color:var(--gd-success)" x-text="Number(data.summary.completed || 0).toLocaleString()"></div>
                 </div>
-                <div class="gd-metric-card" :class="{ 'gd-metric-card--alert': data.summary.failed > 0 }">
-                    <div class="gd-metric-card__label">Failed</div>
-                    <div class="gd-metric-card__value" style="color:var(--gd-danger)" x-text="Number(data.summary.failed || 0).toLocaleString()"></div>
+                <div class="gd-stat-card" :class="{ 'gd-stat-card--alert': data.summary.failed > 0 }">
+                    <div class="gd-stat-card__label">Failed</div>
+                    <div class="gd-stat-card__value" style="color:var(--gd-danger)" x-text="Number(data.summary.failed || 0).toLocaleString()"></div>
                 </div>
-                <div class="gd-metric-card">
-                    <div class="gd-metric-card__label">Avg Duration</div>
-                    <div class="gd-metric-card__value" x-text="formatMs(data.summary.avg_duration)"></div>
+                <div class="gd-stat-card">
+                    <div class="gd-stat-card__label">Avg Duration</div>
+                    <div class="gd-stat-card__value" x-text="formatMs(data.summary.avg_duration)"></div>
                 </div>
             </div>
 

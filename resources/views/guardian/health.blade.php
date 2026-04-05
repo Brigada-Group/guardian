@@ -5,28 +5,28 @@
 @section('content')
 <div x-data="healthPage()" x-init="init()">
     <template x-if="loading && !data">
-        <div class="gd-loading"><div class="gd-spinner"></div> Loading health check data...</div>
+        <div class="gd-skeleton-grid"><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--chart"></div></div>
     </template>
 
     <template x-if="data">
         <div>
             <!-- Summary -->
             <div class="gd-metrics">
-                <div class="gd-metric-card">
-                    <div class="gd-metric-card__label">Total Checks</div>
-                    <div class="gd-metric-card__value" x-text="data.checks.length"></div>
+                <div class="gd-stat-card">
+                    <div class="gd-stat-card__label">Total Checks</div>
+                    <div class="gd-stat-card__value" x-text="data.checks.length"></div>
                 </div>
-                <div class="gd-metric-card">
-                    <div class="gd-metric-card__label">Passing</div>
-                    <div class="gd-metric-card__value gd-status-ok" x-text="data.checks.filter(c => c.status === 'ok').length"></div>
+                <div class="gd-stat-card">
+                    <div class="gd-stat-card__label">Passing</div>
+                    <div class="gd-stat-card__value gd-status-ok" x-text="data.checks.filter(c => c.status === 'ok').length"></div>
                 </div>
-                <div class="gd-metric-card" :class="{ 'gd-metric-card--alert': data.checks.filter(c => c.status === 'warning').length > 0 }">
-                    <div class="gd-metric-card__label">Warnings</div>
-                    <div class="gd-metric-card__value gd-status-warning" x-text="data.checks.filter(c => c.status === 'warning').length"></div>
+                <div class="gd-stat-card" :class="{ 'gd-stat-card--alert': data.checks.filter(c => c.status === 'warning').length > 0 }">
+                    <div class="gd-stat-card__label">Warnings</div>
+                    <div class="gd-stat-card__value gd-status-warning" x-text="data.checks.filter(c => c.status === 'warning').length"></div>
                 </div>
-                <div class="gd-metric-card" :class="{ 'gd-metric-card--alert': data.checks.filter(c => c.status === 'critical').length > 0 }">
-                    <div class="gd-metric-card__label">Critical</div>
-                    <div class="gd-metric-card__value gd-status-critical" x-text="data.checks.filter(c => c.status === 'critical').length"></div>
+                <div class="gd-stat-card" :class="{ 'gd-stat-card--alert': data.checks.filter(c => c.status === 'critical').length > 0 }">
+                    <div class="gd-stat-card__label">Critical</div>
+                    <div class="gd-stat-card__value gd-status-critical" x-text="data.checks.filter(c => c.status === 'critical').length"></div>
                 </div>
             </div>
 
