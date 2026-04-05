@@ -134,7 +134,7 @@ Per-project `.env`:
 
 ```
 GUARDIAN_DISCORD_WEBHOOK=https://discord.com/api/webhooks/xxx/yyy
-GUARDIAN_PROJECT_NAME="Client Portal"
+GUARDIAN_PROJECT_NAME="My App"
 ```
 
 ---
@@ -155,11 +155,11 @@ GUARDIAN_PROJECT_NAME="Client Portal"
 ### Critical/Warning Alert (immediate)
 
 ```
-[Client Portal] CRITICAL — Disk Space
+[My App] CRITICAL — Disk Space
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Disk usage at 94.2% (2.1GB free of 40GB)
 Environment: production
-Server: forge@client-portal
+Server: forge@example-server
 Timestamp: 2026-03-19 14:30:00 UTC
 ```
 
@@ -168,7 +168,7 @@ Embed colors: red (#FF0000) for critical, orange (#FFA500) for warning.
 ### Daily Summary (6 AM)
 
 ```
-[Client Portal] Daily Health Summary
+[My App] Daily Health Summary
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Disk Space         — 62.3% used (15.1GB free)
 Memory             — 71.2% used (1.8GB free)
@@ -193,7 +193,7 @@ Config Cache       — Fresh
 
 Overall: 1 issue needs attention
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Environment: production | Server: forge@client-portal
+Environment: production | Server: forge@example-server
 ```
 
 ### Weekly Full Report (Monday)
@@ -246,7 +246,7 @@ php artisan vendor:publish --tag=guardian-config
 php artisan migrate
 # Add to .env:
 # GUARDIAN_DISCORD_WEBHOOK=https://discord.com/api/webhooks/xxx/yyy
-# GUARDIAN_PROJECT_NAME="Client Portal"
+# GUARDIAN_PROJECT_NAME="My App"
 ```
 
 ---
