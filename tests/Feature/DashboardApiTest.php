@@ -17,6 +17,7 @@ class DashboardApiTest extends TestCase
         $app['config']->set('guardian.dashboard.enabled', true);
         $app['config']->set('app.key', 'base64:' . base64_encode(random_bytes(32)));
         $app['config']->set('guardian.monitoring.queries.enabled', false);
+        $app['config']->set('guardian.monitoring.cache.enabled', false);
     }
 
     private function authenticatedUser()

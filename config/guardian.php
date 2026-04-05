@@ -55,6 +55,7 @@ return [
                 '_debugbar*',
                 'telescope*',
                 'horizon*',
+                'guardian*',
             ],
         ],
 

@@ -111,6 +111,7 @@ class GuardianServiceProvider extends ServiceProvider
 
         if (config('guardian.dashboard.enabled', true)) {
             $this->registerDashboardRoutes();
+            $this->registerDashboardRateLimiter();
         }
 
         if ($this->app->runningInConsole()) {
@@ -206,6 +207,15 @@ class GuardianServiceProvider extends ServiceProvider
         Route::prefix(config('guardian.dashboard.path', 'guardian'))
             ->middleware(['web', 'guardian.gate', 'guardian.ip-filter'])
             ->group(__DIR__ . '/../routes/guardian.php');
+    }
+
+    private function registerDashboardRateLimiter(): void
+    {
+        if (class_exists(\Illuminate\Cache\RateLimiting\Limit::class)) {
+            \Illuminate\Support\Facades\RateLimiter::for('guardian-api', function ($request) {
+                return \Illuminate\Cache\RateLimiting\Limit::perMinute(60)->by($request->ip());
+            });
+        }
     }
 
     private function parseWeeklyDay(string $day): int

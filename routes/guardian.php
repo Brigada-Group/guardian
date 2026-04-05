@@ -14,7 +14,7 @@ Route::get('/cache', [DashboardController::class, 'cache'])->name('guardian.cach
 Route::get('/exceptions', [DashboardController::class, 'exceptions'])->name('guardian.exceptions');
 Route::get('/health', [DashboardController::class, 'health'])->name('guardian.health');
 
-Route::prefix('api')->group(function () {
+Route::prefix('api')->middleware('throttle:guardian-api')->group(function () {
     Route::get('/overview', [DashboardController::class, 'apiOverview'])->name('guardian.api.overview');
     Route::get('/requests', [DashboardController::class, 'apiRequests'])->name('guardian.api.requests');
     Route::get('/queries', [DashboardController::class, 'apiQueries'])->name('guardian.api.queries');
