@@ -5,6 +5,7 @@ namespace Brigada\Guardian\Http\Middleware;
 use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
 use Brigada\Guardian\Models\RequestLog;
+use Brigada\Guardian\Support\IpAnonymizer;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -38,7 +39,7 @@ class RequestMonitor
                 'route_name' => $request->route()?->getName(),
                 'status_code' => $statusCode,
                 'duration_ms' => $durationMs,
-                'ip' => $request->ip(),
+                'ip' => IpAnonymizer::anonymize($request->ip()),
                 'user_id' => Auth::id(),
                 'created_at' => now(),
             ]);

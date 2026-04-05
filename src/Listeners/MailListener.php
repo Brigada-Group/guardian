@@ -20,7 +20,7 @@ class MailListener
             MailLog::create([
                 'mailable' => $event->data['__mailable'] ?? null,
                 'subject' => $message->getSubject(),
-                'to' => $this->formatAddresses($message->getTo()),
+                'to' => $this->maybeHashRecipients($this->formatAddresses($message->getTo())),
                 'status' => 'sent',
                 'created_at' => now(),
             ]);
@@ -49,6 +49,18 @@ class MailListener
             Status::Warning,
             ['to' => $to, 'subject' => $subject],
         );
+    }
+
+    private function maybeHashRecipients(string $recipients): string
+    {
+        if (! config('guardian.security.hash_mail_recipients', false)) {
+            return $recipients;
+        }
+
+        return implode(', ', array_map(
+            fn ($email) => hash('sha256', trim($email)),
+            explode(',', $recipients)
+        ));
     }
 
     private function formatAddresses($addresses): string

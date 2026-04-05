@@ -119,4 +119,17 @@ return [
         'command_logs_days' => 30,
         'scheduled_task_logs_days' => 30,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Security
+    |--------------------------------------------------------------------------
+    */
+
+    'security' => [
+        'sanitize_sql' => true,
+        'anonymize_ip' => false,
+        'hash_mail_recipients' => false,
+        'safe_headers' => ['User-Agent', 'Referer', 'Accept', 'Content-Type'],
+    ],
 ];

@@ -15,9 +15,7 @@ class DiscordNotifier
 
     public function send(array $payload): bool
     {
-        if (empty($this->webhookUrl)) {
-            Log::warning('Guardian: Discord webhook URL not configured');
-
+        if (! $this->isValidWebhookUrl($this->webhookUrl)) {
             return false;
         }
 
@@ -60,5 +58,23 @@ class DiscordNotifier
 
             return false;
         }
+    }
+
+    private function isValidWebhookUrl(string $url): bool
+    {
+        if (empty($url)) {
+            Log::warning('Guardian: Discord webhook URL not configured');
+
+            return false;
+        }
+
+        $parsed = parse_url($url);
+        $host = $parsed['host'] ?? '';
+
+        if (! in_array($host, ['discord.com', 'discordapp.com'])) {
+            Log::warning("Guardian: Discord webhook URL host '{$host}' does not match expected Discord domains. Proceeding anyway (may be a proxy).");
+        }
+
+        return true;
     }
 }

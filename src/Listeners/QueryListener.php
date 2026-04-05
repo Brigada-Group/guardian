@@ -5,6 +5,7 @@ namespace Brigada\Guardian\Listeners;
 use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
 use Brigada\Guardian\Models\QueryLog;
+use Brigada\Guardian\Security\QuerySanitizer;
 use Illuminate\Database\Events\QueryExecuted;
 
 class QueryListener
@@ -36,7 +37,7 @@ class QueryListener
 
         try {
             QueryLog::create([
-                'sql' => mb_substr($event->sql, 0, 5000),
+                'sql' => mb_substr(QuerySanitizer::sanitize($event->sql), 0, 5000),
                 'duration_ms' => $durationMs,
                 'connection' => $event->connectionName,
                 'file' => $caller['file'] ?? null,

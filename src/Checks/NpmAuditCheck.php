@@ -6,6 +6,7 @@ use Brigada\Guardian\Contracts\HealthCheck;
 use Brigada\Guardian\Enums\Schedule;
 use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Results\CheckResult;
+use Illuminate\Support\Facades\Process;
 
 class NpmAuditCheck implements HealthCheck
 {
@@ -18,10 +19,8 @@ class NpmAuditCheck implements HealthCheck
             if (! file_exists(base_path('package-lock.json'))) {
                 return new CheckResult(Status::Ok, 'No package-lock.json found — skipping', ['skipped' => true]);
             }
-            $output = [];
-            $exitCode = 0;
-            exec('cd ' . base_path() . ' && npm audit --json 2>/dev/null', $output, $exitCode);
-            $json = json_decode(implode("\n", $output), true);
+            $result = Process::path(base_path())->run(['npm', 'audit', '--json']);
+            $json = json_decode($result->output(), true);
             if ($json === null) {
                 return new CheckResult(Status::Error, 'Could not parse npm audit output');
             }

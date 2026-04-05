@@ -6,6 +6,8 @@ use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Models\GuardianResult;
 use Brigada\Guardian\Notifications\DiscordMessageBuilder;
 use Brigada\Guardian\Notifications\DiscordNotifier;
+use Brigada\Guardian\Security\HeaderFilter;
+use Brigada\Guardian\Security\StackTraceSanitizer;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
@@ -51,13 +53,13 @@ class ExceptionNotifier
 
         $payload = $this->builder->buildException(
             exceptionClass: get_class($e),
-            message: $e->getMessage(),
+            message: StackTraceSanitizer::sanitize($e->getMessage()),
             url: $context['url'],
             statusCode: $context['status_code'],
             user: $context['user'],
             ip: $context['ip'],
             headers: $context['headers'],
-            stackTrace: "```\n" . $this->formatStackTrace($e) . "\n```",
+            stackTrace: "```\n" . StackTraceSanitizer::sanitize($this->formatStackTrace($e)) . "\n```",
         );
 
         $this->notifier->send($payload);
@@ -122,11 +124,13 @@ class ExceptionNotifier
             $user = 'ID:' . $authUser->getAuthIdentifier() . ' ' . ($authUser->email ?? '');
         }
 
-        $headerLines = collect([
-            'User-Agent' => $request->header('User-Agent'),
-            'Referer' => $request->header('Referer'),
-            'Accept' => $request->header('Accept'),
-        ])->filter()->map(fn ($value, $key) => "{$key}: {$value}")->implode("\n");
+        $allHeaders = collect($request->headers->all())
+            ->map(fn ($values) => implode(', ', $values))
+            ->toArray();
+        $safeHeaders = HeaderFilter::filter($allHeaders);
+        $headerLines = collect($safeHeaders)
+            ->map(fn ($value, $key) => "{$key}: {$value}")
+            ->implode("\n");
 
         return [
             'url' => $request->method() . ' ' . $request->fullUrl(),
