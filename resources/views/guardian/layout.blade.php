@@ -381,6 +381,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 Exceptions
             </a>
+            <a href="{{ route('guardian.alerts') }}" class="gd-sidebar__link {{ request()->routeIs('guardian.alerts') ? 'active' : '' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                Alerts
+            </a>
             <a href="{{ route('guardian.health') }}" class="gd-sidebar__link {{ request()->routeIs('guardian.health') ? 'active' : '' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
                 Health Checks
@@ -523,23 +527,19 @@
             };
         }
 
-        // Patch Chart.js to handle null/destroyed canvas gracefully
-        if (typeof Chart !== 'undefined') {
-            const OrigChart = Chart;
-            const patchedConstruct = function(ctx, config) {
-                if (!ctx || !ctx.getContext) {
-                    console.warn('Guardian: skipped chart render — canvas not available');
-                    return { destroy() {}, update() {}, data: { labels: [], datasets: [] } };
-                }
-                return new OrigChart(ctx, config);
-            };
-            // Also wrap destroy to be safe
-            const origDestroy = OrigChart.prototype.destroy;
-            OrigChart.prototype.destroy = function() {
-                try { origDestroy.call(this); } catch(e) {}
-            };
-            window.SafeChart = patchedConstruct;
-        }
+        // Safe Chart.js wrapper — handles null canvas from x-if DOM recreation
+        window.SafeChart = function(ctx, config) {
+            if (!ctx || !ctx.getContext) return null;
+            try {
+                return new Chart(ctx, config);
+            } catch(e) {
+                return null;
+            }
+        };
+        window.destroyChart = function(chart) {
+            if (chart) { try { chart.destroy(); } catch(e) {} }
+            return null;
+        };
 
         function statusBadgeClass(status) {
             const map = { ok: 'gd-badge--ok', success: 'gd-badge--success', warning: 'gd-badge--warning', critical: 'gd-badge--critical', failed: 'gd-badge--failed', danger: 'gd-badge--danger', info: 'gd-badge--info' };

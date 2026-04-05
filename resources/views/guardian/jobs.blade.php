@@ -14,7 +14,7 @@
         <div class="gd-loading"><div class="gd-spinner"></div> Loading jobs data...</div>
     </template>
 
-    <div x-show="data" x-cloak>
+    <template x-if="data">
         <div>
             <!-- Charts -->
             <div class="gd-card">
@@ -110,7 +110,7 @@
                 </div>
             </template>
         </div>
-    </div>
+    </template>
 </div>
 @endsection
 
@@ -136,7 +136,7 @@ function jobsPage() {
                 const params = { tab: this.tab, page: this.page };
                 const res = await guardianFetch('{{ route("guardian.api.jobs") }}', params);
                 this.data = res.data;
-                this.$nextTick(() => this.renderCharts());
+                this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Jobs fetch failed', e); }
             this.loading = false;
         },

@@ -8,7 +8,7 @@
         <div class="gd-loading"><div class="gd-spinner"></div> Loading cache data...</div>
     </template>
 
-    <div x-show="data" x-cloak>
+    <template x-if="data">
         <div>
             <!-- Top metrics -->
             <div class="gd-metrics">
@@ -90,7 +90,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </template>
 </div>
 @endsection
 
@@ -113,7 +113,7 @@ function cachePage() {
             try {
                 const res = await guardianFetch('{{ route("guardian.api.cache") }}');
                 this.data = res.data;
-                this.$nextTick(() => this.renderCharts());
+                this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Cache fetch failed', e); }
             this.loading = false;
         },

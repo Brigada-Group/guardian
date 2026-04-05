@@ -22,7 +22,7 @@
         <div class="gd-loading"><div class="gd-spinner"></div> Loading query data...</div>
     </template>
 
-    <div x-show="data" x-cloak>
+    <template x-if="data">
         <div>
             <!-- Trend chart -->
             <div class="gd-card">
@@ -81,7 +81,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </template>
 </div>
 @endsection
 
@@ -115,7 +115,7 @@ function queriesPage() {
                 const params = { ...dateRangeToParams(this.dateRange), tab: this.tab, page: this.page };
                 const res = await guardianFetch('{{ route("guardian.api.queries") }}', params);
                 this.data = res.data;
-                this.$nextTick(() => this.renderCharts());
+                this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Queries fetch failed', e); }
             this.loading = false;
         },

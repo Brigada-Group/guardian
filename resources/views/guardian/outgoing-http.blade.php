@@ -18,7 +18,7 @@
         <div class="gd-loading"><div class="gd-spinner"></div> Loading outgoing HTTP data...</div>
     </template>
 
-    <div x-show="data" x-cloak>
+    <template x-if="data">
         <div>
             <!-- By host chart + table -->
             <div class="gd-grid gd-grid--2">
@@ -96,7 +96,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </template>
 </div>
 @endsection
 
@@ -130,7 +130,7 @@ function outgoingHttpPage() {
                 if (this.failedOnly) params.failed_only = 1;
                 const res = await guardianFetch('{{ route("guardian.api.outgoing-http") }}', params);
                 this.data = res.data;
-                this.$nextTick(() => this.renderCharts());
+                this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Outgoing HTTP fetch failed', e); }
             this.loading = false;
         },

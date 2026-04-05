@@ -15,7 +15,7 @@
         <div class="gd-loading"><div class="gd-spinner"></div> Loading exception data...</div>
     </template>
 
-    <div x-show="data" x-cloak>
+    <template x-if="data">
         <div>
             <!-- Trend chart -->
             <div class="gd-card">
@@ -65,9 +65,13 @@
                     <!-- Expanded details -->
                     <template x-if="expanded">
                         <div class="gd-expandable__content">
-                            <strong>Full exception class:</strong> <span x-text="expanded"></span>
+                            <strong>Full exception class:</strong> <span class="gd-mono" x-text="expanded"></span>
                             <br><br>
                             <strong>Message:</strong> <span x-text="getExpandedMessage()"></span>
+                            <br><br>
+                            <button class="gd-btn gd-btn--sm" @click="copyExceptionAsMarkdown(expanded)">
+                                Copy as Markdown for AI
+                            </button>
                         </div>
                     </template>
                     <template x-if="data.grouped.last_page > 1">
@@ -82,7 +86,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </template>
 </div>
 @endsection
 
@@ -115,7 +119,7 @@ function exceptionsPage() {
                 const params = { ...dateRangeToParams(this.dateRange), page: this.page };
                 const res = await guardianFetch('{{ route("guardian.api.exceptions") }}', params);
                 this.data = res.data;
-                this.$nextTick(() => this.renderCharts());
+                this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Exceptions fetch failed', e); }
             this.loading = false;
         },
@@ -124,6 +128,20 @@ function exceptionsPage() {
             if (!this.expanded || !this.data) return '';
             const exc = (this.data.grouped.data || []).find(e => e.check_class === this.expanded);
             return exc ? exc.message : '';
+        },
+
+        copyExceptionAsMarkdown(checkClass) {
+            const exc = (this.data.grouped.data || []).find(e => e.check_class === checkClass);
+            if (!exc) return;
+            const parts = checkClass.replace('exception:', '').split(':');
+            let md = `## Exception Report\n\n`;
+            md += `- **Exception:** ${parts[0] || checkClass}\n`;
+            md += `- **File:** ${parts.slice(1).join(':') || 'unknown'}\n`;
+            md += `- **Message:** ${exc.message || 'N/A'}\n`;
+            md += `- **Occurrences:** ${exc.occurrence_count || 1}\n`;
+            md += `- **Last Seen:** ${exc.last_seen || 'N/A'}\n`;
+            md += `\n---\n*Please analyze this error and suggest a fix. Include the root cause and any code changes needed.*\n`;
+            navigator.clipboard.writeText(md);
         },
 
         goToPage(p) { this.page = p; this.fetchData(); },

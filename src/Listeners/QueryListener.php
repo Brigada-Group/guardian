@@ -36,6 +36,17 @@ class QueryListener
         $caller = $this->findCaller();
 
         try {
+            $metadata = null;
+            if ($isNPlusOne) {
+                $metadata = ['repeat_count' => self::$queryCounts[$normalized] ?? 0];
+            }
+            if ($isSlow) {
+                $metadata = array_merge($metadata ?? [], [
+                    'threshold_ms' => $slowThreshold,
+                    'severity' => $durationMs >= ($slowThreshold * 3) ? 'critical' : 'warning',
+                ]);
+            }
+
             QueryLog::create([
                 'sql' => mb_substr(QuerySanitizer::sanitize($event->sql), 0, 5000),
                 'duration_ms' => $durationMs,
@@ -44,6 +55,7 @@ class QueryListener
                 'line' => $caller['line'] ?? null,
                 'is_slow' => $isSlow,
                 'is_n_plus_one' => $isNPlusOne,
+                'metadata' => $metadata,
                 'created_at' => now(),
             ]);
         } catch (\Throwable) {

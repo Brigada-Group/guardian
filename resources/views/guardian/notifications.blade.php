@@ -26,7 +26,7 @@
         <div class="gd-loading"><div class="gd-spinner"></div> Loading notification data...</div>
     </template>
 
-    <div x-show="data" x-cloak>
+    <template x-if="data">
         <div>
             <!-- Channel breakdown -->
             <div class="gd-grid gd-grid--2">
@@ -100,7 +100,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </template>
 </div>
 @endsection
 
@@ -128,7 +128,7 @@ function notificationsPage() {
                 if (this.filters.status) params.status = this.filters.status;
                 const res = await guardianFetch('{{ route("guardian.api.notifications") }}', params);
                 this.data = res.data;
-                this.$nextTick(() => this.renderCharts());
+                this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Notifications fetch failed', e); }
             this.loading = false;
         },

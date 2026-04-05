@@ -63,7 +63,7 @@ class ExceptionNotifier
         );
 
         $this->notifier->send($payload);
-        $this->record($dedupKey, $e, true);
+        $this->record($dedupKey, $e, true, $context);
     }
 
     private function dedupKey(\Throwable $e): string
@@ -87,16 +87,26 @@ class ExceptionNotifier
         return $lastNotified->notified_at->diffInMinutes(now()) >= $dedupMinutes;
     }
 
-    private function record(string $dedupKey, \Throwable $e, bool $notified): void
+    private function record(string $dedupKey, \Throwable $e, bool $notified, ?array $context = null): void
     {
+        if (! $context) {
+            $context = $this->extractContext($e);
+        }
+
         GuardianResult::create([
             'check_class' => $dedupKey,
             'status' => Status::Error->value,
-            'message' => mb_substr($e->getMessage(), 0, 1000),
+            'message' => mb_substr(StackTraceSanitizer::sanitize($e->getMessage()), 0, 1000),
             'metadata' => [
                 'exception_class' => get_class($e),
-                'file' => $e->getFile(),
+                'file' => StackTraceSanitizer::sanitize($e->getFile()),
                 'line' => $e->getLine(),
+                'url' => $context['url'] ?? 'N/A',
+                'status_code' => $context['status_code'] ?? 500,
+                'user' => $context['user'] ?? 'N/A',
+                'ip' => $context['ip'] ?? 'N/A',
+                'headers' => $context['headers'] ?? 'N/A',
+                'stack_trace' => StackTraceSanitizer::sanitize($this->formatStackTrace($e)),
             ],
             'notified_at' => $notified ? now() : null,
             'created_at' => now(),

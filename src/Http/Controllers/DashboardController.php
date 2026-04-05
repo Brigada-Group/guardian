@@ -83,6 +83,13 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function alerts()
+    {
+        return view('guardian::guardian.alerts', [
+            'pollInterval' => config('guardian.dashboard.poll_interval', 30),
+        ]);
+    }
+
     public function health()
     {
         return view('guardian::guardian.health', [
@@ -133,8 +140,20 @@ class DashboardController extends Controller
                 ->take(10)
                 ->get(['check_class', 'status', 'message', 'notified_at']);
 
+            $thresholds = [
+                'slow_request_ms' => config('guardian.monitoring.requests.slow_threshold_ms', 5000),
+                'error_rate_threshold' => config('guardian.monitoring.requests.error_rate_threshold', 50),
+                'slow_query_ms' => config('guardian.monitoring.queries.slow_threshold_ms', 500),
+                'n_plus_one_threshold' => config('guardian.monitoring.queries.n_plus_one_threshold', 10),
+                'slow_http_ms' => config('guardian.monitoring.outgoing_http.slow_threshold_ms', 10000),
+                'slow_command_ms' => config('guardian.monitoring.commands.slow_threshold_ms', 60000),
+                'slow_task_ms' => config('guardian.monitoring.scheduled_tasks.slow_threshold_ms', 300000),
+                'low_cache_hit_rate' => config('guardian.monitoring.cache.low_hit_rate_threshold', 50),
+            ];
+
             return $this->apiResponse([
                 'metrics' => compact('totalRequests', 'errorRate', 'avgResponseTime', 'cacheHitRate', 'failedCommands', 'exceptionCount'),
+                'thresholds' => $thresholds,
                 'response_time_chart' => $responseTimeChart,
                 'error_chart' => $errorChart,
                 'recent_alerts' => $recentAlerts,
@@ -420,6 +439,52 @@ class DashboardController extends Controller
             return $this->apiResponse(['grouped' => $grouped, 'trend' => $trend]);
         } catch (\Throwable $e) {
             return $this->apiError('Failed to load exception data.');
+        }
+    }
+
+    public function apiAlerts(Request $request): JsonResponse
+    {
+        try {
+            $perPage = config('guardian.dashboard.per_page', 50);
+            $query = GuardianResult::whereNotNull('notified_at');
+
+            if ($status = $request->query('status')) {
+                $query->where('status', $status);
+            }
+            if ($dateFrom = $request->query('date_from')) {
+                $query->where('created_at', '>=', $dateFrom);
+            }
+            if ($dateTo = $request->query('date_to')) {
+                $query->where('created_at', '<=', $dateTo);
+            }
+            if ($type = $request->query('type')) {
+                if ($type === 'exception') {
+                    $query->where('check_class', 'like', 'exception:%');
+                } elseif ($type === 'monitor') {
+                    $query->where('check_class', 'like', 'monitor:%');
+                } else {
+                    $query->where('check_class', 'not like', 'exception:%')
+                          ->where('check_class', 'not like', 'monitor:%');
+                }
+            }
+
+            $alerts = $query->latest('notified_at')->paginate($perPage);
+
+            // Summary counts
+            $since24h = now()->subHours(24);
+            $summary = [
+                'total_24h' => GuardianResult::whereNotNull('notified_at')->where('notified_at', '>=', $since24h)->count(),
+                'critical_24h' => GuardianResult::whereNotNull('notified_at')->where('notified_at', '>=', $since24h)->where('status', 'critical')->count(),
+                'warning_24h' => GuardianResult::whereNotNull('notified_at')->where('notified_at', '>=', $since24h)->where('status', 'warning')->count(),
+                'error_24h' => GuardianResult::whereNotNull('notified_at')->where('notified_at', '>=', $since24h)->where('status', 'error')->count(),
+            ];
+
+            return $this->apiResponse([
+                'alerts' => $alerts,
+                'summary' => $summary,
+            ]);
+        } catch (\Throwable $e) {
+            return $this->apiError('Failed to load alerts data.');
         }
     }
 

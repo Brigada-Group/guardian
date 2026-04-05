@@ -20,7 +20,7 @@
         <div class="gd-loading"><div class="gd-spinner"></div> Loading mail data...</div>
     </template>
 
-    <div x-show="data" x-cloak>
+    <template x-if="data">
         <div>
             <!-- Daily chart -->
             <div class="gd-card">
@@ -72,7 +72,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </template>
 </div>
 @endsection
 
@@ -106,7 +106,7 @@ function mailPage() {
                 if (this.filters.status) params.status = this.filters.status;
                 const res = await guardianFetch('{{ route("guardian.api.mail") }}', params);
                 this.data = res.data;
-                this.$nextTick(() => this.renderCharts());
+                this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Mail fetch failed', e); }
             this.loading = false;
         },

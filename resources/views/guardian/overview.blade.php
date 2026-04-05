@@ -9,7 +9,7 @@
         <div class="gd-loading"><div class="gd-spinner"></div> Loading overview data...</div>
     </template>
 
-    <div x-show="data" x-cloak>
+    <template x-if="data">
         <div>
             <!-- Metric cards -->
             <div class="gd-metrics">
@@ -94,8 +94,29 @@
                     </template>
                 </div>
             </div>
+            <!-- Configured Thresholds -->
+            <template x-if="data.thresholds">
+                <div class="gd-card">
+                    <div class="gd-card__header">Configured Thresholds</div>
+                    <div class="gd-card__body" style="padding:0">
+                        <table class="gd-table">
+                            <thead><tr><th>Setting</th><th>Value</th></tr></thead>
+                            <tbody>
+                                <tr><td>Slow Request</td><td x-text="data.thresholds.slow_request_ms + 'ms'"></td></tr>
+                                <tr><td>Error Rate Alert</td><td x-text="data.thresholds.error_rate_threshold + ' errors'"></td></tr>
+                                <tr><td>Slow Query</td><td x-text="data.thresholds.slow_query_ms + 'ms'"></td></tr>
+                                <tr><td>N+1 Detection</td><td x-text="data.thresholds.n_plus_one_threshold + ' repeats'"></td></tr>
+                                <tr><td>Slow HTTP Call</td><td x-text="data.thresholds.slow_http_ms + 'ms'"></td></tr>
+                                <tr><td>Slow Command</td><td x-text="(data.thresholds.slow_command_ms / 1000) + 's'"></td></tr>
+                                <tr><td>Slow Scheduled Task</td><td x-text="(data.thresholds.slow_task_ms / 1000) + 's'"></td></tr>
+                                <tr><td>Low Cache Hit Rate</td><td x-text="data.thresholds.low_cache_hit_rate + '%'"></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </template>
         </div>
-    </div>
+    </template>
 </div>
 @endsection
 
@@ -119,7 +140,7 @@ function overviewPage() {
             try {
                 const res = await guardianFetch('{{ route("guardian.api.overview") }}');
                 this.data = res.data;
-                this.$nextTick(() => this.renderCharts());
+                this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Overview fetch failed', e); }
             this.loading = false;
         },

@@ -26,7 +26,7 @@
         <div class="gd-loading"><div class="gd-spinner"></div> Loading request data...</div>
     </template>
 
-    <div x-show="data" x-cloak>
+    <template x-if="data">
         <div>
             <!-- Histogram -->
             <div class="gd-grid gd-grid--2">
@@ -102,7 +102,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </template>
 </div>
 @endsection
 
@@ -137,7 +137,7 @@ function requestsPage() {
                 if (this.filters.slow_only) params.slow_only = 1;
                 const res = await guardianFetch('{{ route("guardian.api.requests") }}', params);
                 this.data = res.data;
-                this.$nextTick(() => this.renderCharts());
+                this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Requests fetch failed', e); }
             this.loading = false;
         },

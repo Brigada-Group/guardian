@@ -8,7 +8,7 @@
         <div class="gd-loading"><div class="gd-spinner"></div> Loading health check data...</div>
     </template>
 
-    <div x-show="data" x-cloak>
+    <template x-if="data">
         <div>
             <!-- Summary -->
             <div class="gd-metrics">
@@ -75,7 +75,7 @@
                 </template>
             </div>
         </div>
-    </div>
+    </template>
 </div>
 @endsection
 
