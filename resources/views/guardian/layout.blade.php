@@ -636,6 +636,15 @@
             if (chart) { try { chart.destroy(); } catch(e) {} }
             return null;
         };
+        // Destroy all charts in a charts object — call BEFORE updating data to stop animation loops
+        window.destroyAllCharts = function(charts) {
+            Object.keys(charts).forEach(key => {
+                if (charts[key]) {
+                    try { charts[key].destroy(); } catch(e) {}
+                    charts[key] = null;
+                }
+            });
+        };
 
         function statusBadgeClass(status) {
             const map = { ok: 'gd-badge--ok', success: 'gd-badge--success', warning: 'gd-badge--warning', critical: 'gd-badge--critical', failed: 'gd-badge--failed', danger: 'gd-badge--danger', info: 'gd-badge--info' };

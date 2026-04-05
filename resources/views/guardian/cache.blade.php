@@ -112,6 +112,7 @@ function cachePage() {
             this.loading = true;
             try {
                 const res = await guardianFetch('{{ route("guardian.api.cache") }}');
+                destroyAllCharts(this.charts);
                 this.data = res.data;
                 this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Cache fetch failed', e); }
@@ -130,7 +131,6 @@ function cachePage() {
             const colors = getChartColors(isDark);
 
             // Hit rate line chart
-            if (this.charts.hitRate) this.charts.hitRate.destroy();
             const hrCtx = this.$refs.hitRateChart;
             if (hrCtx && this.data.logs) {
                 const logs = [...this.data.logs].reverse().slice(-50);
@@ -156,7 +156,6 @@ function cachePage() {
             }
 
             // Store breakdown
-            if (this.charts.store) this.charts.store.destroy();
             const stCtx = this.$refs.storeChart;
             if (stCtx && this.data.by_store) {
                 const palette = [colors.blue, colors.green, colors.yellow, colors.purple, colors.cyan];
@@ -181,7 +180,6 @@ function cachePage() {
             }
 
             // Gauge chart
-            if (this.charts.gauge) this.charts.gauge.destroy();
             const gCtx = this.$refs.gaugeChart;
             if (gCtx) {
                 const rate = Number(this.data.current_hit_rate || 0);

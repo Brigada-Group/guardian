@@ -118,6 +118,7 @@ function exceptionsPage() {
             try {
                 const params = { ...dateRangeToParams(this.dateRange), page: this.page };
                 const res = await guardianFetch('{{ route("guardian.api.exceptions") }}', params);
+                destroyAllCharts(this.charts);
                 this.data = res.data;
                 this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Exceptions fetch failed', e); }
@@ -156,7 +157,6 @@ function exceptionsPage() {
         renderCharts() {
             const isDark = document.documentElement.classList.contains('gd-dark');
             const colors = getChartColors(isDark);
-            if (this.charts.trend) this.charts.trend.destroy();
             const ctx = this.$refs.trendChart;
             if (ctx && this.data.trend) {
                 this.charts.trend = SafeChart(ctx, {

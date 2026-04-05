@@ -114,6 +114,7 @@ function queriesPage() {
             try {
                 const params = { ...dateRangeToParams(this.dateRange), tab: this.tab, page: this.page };
                 const res = await guardianFetch('{{ route("guardian.api.queries") }}', params);
+                destroyAllCharts(this.charts);
                 this.data = res.data;
                 this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Queries fetch failed', e); }
@@ -138,7 +139,6 @@ function queriesPage() {
         renderCharts() {
             const isDark = document.documentElement.classList.contains('gd-dark');
             const colors = getChartColors(isDark);
-            if (this.charts.trend) this.charts.trend.destroy();
             const ctx = this.$refs.trendChart;
             if (ctx && this.data.trend) {
                 this.charts.trend = SafeChart(ctx, {

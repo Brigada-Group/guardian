@@ -244,6 +244,7 @@ function queuePage() {
                 if (this.filters.queue) params.queue = this.filters.queue;
                 if (this.filters.job_class) params.job_class = this.filters.job_class;
                 const res = await guardianFetch('{{ route("guardian.api.queue") }}', params);
+                destroyAllCharts(this.charts);
                 this.data = res.data;
                 this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Queue fetch failed', e); }
@@ -316,7 +317,6 @@ function queuePage() {
             const colors = getChartColors(isDark);
 
             // Throughput chart
-            this.charts.throughput = destroyChart(this.charts.throughput);
             const ctx = this.$refs.throughputChart;
             if (ctx && this.data.throughput) {
                 const hours = [...new Set(this.data.throughput.map(d => d.hour))].sort();

@@ -129,6 +129,7 @@ function outgoingHttpPage() {
                 const params = { ...dateRangeToParams(this.dateRange), page: this.page };
                 if (this.failedOnly) params.failed_only = 1;
                 const res = await guardianFetch('{{ route("guardian.api.outgoing-http") }}', params);
+                destroyAllCharts(this.charts);
                 this.data = res.data;
                 this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Outgoing HTTP fetch failed', e); }
@@ -147,7 +148,6 @@ function outgoingHttpPage() {
         renderCharts() {
             const isDark = document.documentElement.classList.contains('gd-dark');
             const colors = getChartColors(isDark);
-            if (this.charts.host) this.charts.host.destroy();
             const ctx = this.$refs.hostChart;
             if (ctx && this.data.by_host) {
                 this.charts.host = SafeChart(ctx, {

@@ -136,6 +136,7 @@ function requestsPage() {
                 if (this.filters.method) params.method = this.filters.method;
                 if (this.filters.slow_only) params.slow_only = 1;
                 const res = await guardianFetch('{{ route("guardian.api.requests") }}', params);
+                destroyAllCharts(this.charts);
                 this.data = res.data;
                 this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Requests fetch failed', e); }
@@ -154,7 +155,6 @@ function requestsPage() {
         renderCharts() {
             const isDark = document.documentElement.classList.contains('gd-dark');
             const colors = getChartColors(isDark);
-            if (this.charts.histogram) this.charts.histogram.destroy();
             const ctx = this.$refs.histogramChart;
             if (ctx && this.data.histogram) {
                 const h = this.data.histogram;

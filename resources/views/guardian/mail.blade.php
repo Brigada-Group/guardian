@@ -105,6 +105,7 @@ function mailPage() {
                 const params = { ...dateRangeToParams(this.dateRange), page: this.page };
                 if (this.filters.status) params.status = this.filters.status;
                 const res = await guardianFetch('{{ route("guardian.api.mail") }}', params);
+                destroyAllCharts(this.charts);
                 this.data = res.data;
                 this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Mail fetch failed', e); }
@@ -123,7 +124,6 @@ function mailPage() {
         renderCharts() {
             const isDark = document.documentElement.classList.contains('gd-dark');
             const colors = getChartColors(isDark);
-            if (this.charts.daily) this.charts.daily.destroy();
             const ctx = this.$refs.dailyChart;
             if (!ctx || !this.data.daily_chart) return;
 

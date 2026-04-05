@@ -139,6 +139,7 @@ function overviewPage() {
             this.loading = true;
             try {
                 const res = await guardianFetch('{{ route("guardian.api.overview") }}');
+                destroyAllCharts(this.charts);
                 this.data = res.data;
                 this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Overview fetch failed', e); }
@@ -159,7 +160,6 @@ function overviewPage() {
             const colors = getChartColors(isDark);
 
             // Response time chart
-            if (this.charts.responseTime) this.charts.responseTime.destroy();
             const rtCtx = this.$refs.responseTimeChart;
             if (rtCtx) {
                 this.charts.responseTime = SafeChart(rtCtx, {
@@ -186,7 +186,6 @@ function overviewPage() {
             }
 
             // Error chart
-            if (this.charts.error) this.charts.error.destroy();
             const errCtx = this.$refs.errorChart;
             if (errCtx) {
                 this.charts.error = SafeChart(errCtx, {

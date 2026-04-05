@@ -205,6 +205,7 @@ function logsPage() {
                 if (this.filters.channel) params.channel = this.filters.channel;
                 if (this.filters.search) params.search = this.filters.search;
                 const res = await guardianFetch('{{ route("guardian.api.logs") }}', params);
+                destroyAllCharts(this.charts);
                 this.data = res.data;
                 this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Logs fetch failed', e); }
@@ -271,7 +272,6 @@ function logsPage() {
             const colors = getChartColors(isDark);
 
             // Level distribution doughnut
-            this.charts.level = destroyChart(this.charts.level);
             const levelCtx = this.$refs.levelChart;
             if (levelCtx && this.data.by_level) {
                 const levelColors = {
@@ -305,7 +305,6 @@ function logsPage() {
             }
 
             // Hourly trend stacked bar
-            this.charts.trend = destroyChart(this.charts.trend);
             const trendCtx = this.$refs.trendChart;
             if (trendCtx && this.data.trend) {
                 const levelColors = {

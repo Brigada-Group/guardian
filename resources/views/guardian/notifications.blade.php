@@ -127,6 +127,7 @@ function notificationsPage() {
                 if (this.filters.channel) params.channel = this.filters.channel;
                 if (this.filters.status) params.status = this.filters.status;
                 const res = await guardianFetch('{{ route("guardian.api.notifications") }}', params);
+                destroyAllCharts(this.charts);
                 this.data = res.data;
                 this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Notifications fetch failed', e); }
@@ -145,7 +146,6 @@ function notificationsPage() {
         renderCharts() {
             const isDark = document.documentElement.classList.contains('gd-dark');
             const colors = getChartColors(isDark);
-            if (this.charts.channel) this.charts.channel.destroy();
             const ctx = this.$refs.channelChart;
             if (!ctx || !this.data.by_channel) return;
 

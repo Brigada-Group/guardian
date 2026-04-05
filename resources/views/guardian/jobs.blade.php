@@ -135,6 +135,7 @@ function jobsPage() {
             try {
                 const params = { tab: this.tab, page: this.page };
                 const res = await guardianFetch('{{ route("guardian.api.jobs") }}', params);
+                destroyAllCharts(this.charts);
                 this.data = res.data;
                 this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Jobs fetch failed', e); }
@@ -153,7 +154,6 @@ function jobsPage() {
         renderCharts() {
             const isDark = document.documentElement.classList.contains('gd-dark');
             const colors = getChartColors(isDark);
-            if (this.charts.breakdown) this.charts.breakdown.destroy();
             const ctx = this.$refs.breakdownChart;
             if (!ctx) return;
 
