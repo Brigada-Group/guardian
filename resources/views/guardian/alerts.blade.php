@@ -3,179 +3,213 @@
 @section('page-title', 'Alerts')
 
 @section('content')
-<div x-data="alertsPage()" x-init="init()">
-    <!-- Summary cards -->
-    <div class="gd-grid gd-grid--4" style="margin-bottom:20px;">
-        <div x-show="loaded" x-cloak>
-            <div class="gd-grid gd-grid--4" style="grid-column: 1/-1;">
-                @include('guardian::guardian.partials.metric-card', ['xValue' => 'data.summary.total_24h', 'title' => 'Alerts (24h)', 'color' => 'blue'])
-                @include('guardian::guardian.partials.metric-card', ['xValue' => 'data.summary.critical_24h', 'title' => 'Critical', 'color' => 'red'])
-                @include('guardian::guardian.partials.metric-card', ['xValue' => 'data.summary.warning_24h', 'title' => 'Warning', 'color' => 'yellow'])
-                @include('guardian::guardian.partials.metric-card', ['xValue' => 'data.summary.error_24h', 'title' => 'Errors', 'color' => 'orange'])
-            </div>
-        </template>
-    </div>
-
-    <!-- Filters -->
-    <div class="gd-card">
-        <div class="gd-card__body" style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-            @include('guardian::guardian.partials.date-filter')
-            <select class="gd-btn" x-model="filters.status" @change="fetchData()">
-                <option value="">All Statuses</option>
-                <option value="critical">Critical</option>
-                <option value="warning">Warning</option>
-                <option value="error">Error</option>
-                <option value="ok">OK</option>
-            </select>
-            <select class="gd-btn" x-model="filters.type" @change="fetchData()">
-                <option value="">All Types</option>
-                <option value="exception">Exceptions</option>
-                <option value="monitor">Monitor Alerts</option>
-                <option value="check">Health Checks</option>
-            </select>
-        </div>
-    </div>
-
+<div x-data="alertsPage()" x-init="init()" class="space-y-6">
+    <!-- Loading -->
     <div x-show="loading && !loaded">
-        <div class="gd-skeleton-grid"><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--chart"></div></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="gd-skeleton gd-skeleton--card"></div>
+            <div class="gd-skeleton gd-skeleton--card"></div>
+            <div class="gd-skeleton gd-skeleton--card"></div>
+            <div class="gd-skeleton gd-skeleton--card"></div>
+        </div>
+        <div class="gd-skeleton gd-skeleton--chart"></div>
     </div>
 
-    <div x-show="loaded" x-cloak>
+    <div x-show="loaded" x-cloak class="space-y-6">
+        <!-- Summary cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="gd-stat-card">
+                <div class="gd-stat-card__header">
+                    <span class="gd-stat-card__dot" style="background:#6366f1"></span>
+                    <span class="gd-stat-card__label">Alerts (24h)</span>
+                </div>
+                <div class="gd-stat-card__value" x-text="data?.summary?.total_24h ?? 0"></div>
+            </div>
+            <div class="gd-stat-card" :class="{ 'gd-stat-card--alert': (data?.summary?.critical_24h ?? 0) > 0 }">
+                <div class="gd-stat-card__header">
+                    <span class="gd-stat-card__dot" style="background:#ef4444"></span>
+                    <span class="gd-stat-card__label">Critical</span>
+                </div>
+                <div class="gd-stat-card__value" x-text="data?.summary?.critical_24h ?? 0"></div>
+            </div>
+            <div class="gd-stat-card">
+                <div class="gd-stat-card__header">
+                    <span class="gd-stat-card__dot" style="background:#eab308"></span>
+                    <span class="gd-stat-card__label">Warning</span>
+                </div>
+                <div class="gd-stat-card__value" x-text="data?.summary?.warning_24h ?? 0"></div>
+            </div>
+            <div class="gd-stat-card">
+                <div class="gd-stat-card__header">
+                    <span class="gd-stat-card__dot" style="background:#f97316"></span>
+                    <span class="gd-stat-card__label">Errors</span>
+                </div>
+                <div class="gd-stat-card__value" x-text="data?.summary?.error_24h ?? 0"></div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="gd-card">
+            <div class="gd-card__body" style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                @include('guardian::guardian.partials.date-filter')
+                <select class="gd-filter-input" x-model="filters.status" @change="fetchData()">
+                    <option value="">All Statuses</option>
+                    <option value="critical">Critical</option>
+                    <option value="warning">Warning</option>
+                    <option value="error">Error</option>
+                    <option value="ok">OK</option>
+                </select>
+                <select class="gd-filter-input" x-model="filters.type" @change="fetchData()">
+                    <option value="">All Types</option>
+                    <option value="exception">Exceptions</option>
+                    <option value="monitor">Monitor Alerts</option>
+                    <option value="check">Health Checks</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Alert table -->
         <div class="gd-card">
             <div class="gd-card__header">Alert History</div>
             <div class="gd-card__body" style="padding:0">
-                <div class="gd-table-wrapper">
-                    <table class="gd-table">
-                        <thead>
-                            <tr>
-                                <th>Time</th>
-                                <th>Status</th>
-                                <th>Source</th>
-                                <th>Message</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <template x-for="alert in (data.alerts.data || [])" :key="alert.id">
-                                <tr>
-                                    <td style="white-space:nowrap;" x-text="formatDate(alert.notified_at || alert.created_at)"></td>
-                                    <td>
-                                        <span class="gd-badge" :class="statusBadgeClass(alert.status)" x-text="alert.status"></span>
-                                    </td>
-                                    <td class="gd-mono gd-truncate" style="max-width:200px;" x-text="formatSource(alert.check_class)"></td>
-                                    <td class="gd-truncate" style="max-width:400px;" x-text="alert.message"></td>
-                                    <td style="white-space:nowrap;">
-                                        <button class="gd-btn gd-btn--sm" @click="toggleDetail(alert)" x-text="expandedId === alert.id ? 'Hide' : 'Details'"></button>
-                                        <button class="gd-btn gd-btn--sm" @click="copyAsMarkdown(alert)" title="Copy as Markdown for AI">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:middle;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                                            MD
-                                        </button>
-                                    </td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Expanded detail panel -->
-                <template x-if="expandedAlert">
-                    <div class="gd-card" style="margin:16px; background:var(--gd-card-bg); border:1px solid var(--gd-border);">
-                        <div class="gd-card__header" style="display:flex; justify-content:space-between; align-items:center;">
-                            <span>Alert Detail</span>
-                            <button class="gd-btn gd-btn--sm" @click="copyAsMarkdown(expandedAlert)">Copy as Markdown for AI</button>
-                        </div>
-                        <div class="gd-card__body">
-                            <div style="display:grid; grid-template-columns: 120px 1fr; gap:8px; font-size:13px;">
-                                <strong>Status:</strong>
-                                <span class="gd-badge" :class="statusBadgeClass(expandedAlert.status)" x-text="expandedAlert.status"></span>
-
-                                <strong>Source:</strong>
-                                <span class="gd-mono" x-text="expandedAlert.check_class"></span>
-
-                                <strong>Message:</strong>
-                                <span x-text="expandedAlert.message"></span>
-
-                                <strong>Time:</strong>
-                                <span x-text="formatDate(expandedAlert.notified_at || expandedAlert.created_at)"></span>
-
-                                <template x-if="expandedAlert.metadata?.url">
-                                    <strong>URL:</strong>
-                                </template>
-                                <template x-if="expandedAlert.metadata?.url">
-                                    <span class="gd-mono" x-text="expandedAlert.metadata.url"></span>
-                                </template>
-
-                                <template x-if="expandedAlert.metadata?.status_code">
-                                    <strong>Status Code:</strong>
-                                </template>
-                                <template x-if="expandedAlert.metadata?.status_code">
-                                    <span x-text="expandedAlert.metadata.status_code"></span>
-                                </template>
-
-                                <template x-if="expandedAlert.metadata?.user">
-                                    <strong>User:</strong>
-                                </template>
-                                <template x-if="expandedAlert.metadata?.user">
-                                    <span x-text="expandedAlert.metadata.user"></span>
-                                </template>
-
-                                <template x-if="expandedAlert.metadata?.ip">
-                                    <strong>IP:</strong>
-                                </template>
-                                <template x-if="expandedAlert.metadata?.ip">
-                                    <span x-text="expandedAlert.metadata.ip"></span>
-                                </template>
-
-                                <template x-if="expandedAlert.metadata?.exception_class">
-                                    <strong>Exception:</strong>
-                                </template>
-                                <template x-if="expandedAlert.metadata?.exception_class">
-                                    <span class="gd-mono" x-text="expandedAlert.metadata.exception_class"></span>
-                                </template>
-
-                                <template x-if="expandedAlert.metadata?.file">
-                                    <strong>File:</strong>
-                                </template>
-                                <template x-if="expandedAlert.metadata?.file">
-                                    <span class="gd-mono" x-text="expandedAlert.metadata.file + ':' + (expandedAlert.metadata.line || '')"></span>
-                                </template>
-
-                                <template x-if="expandedAlert.metadata?.headers && expandedAlert.metadata.headers !== 'N/A'">
-                                    <strong>Headers:</strong>
-                                </template>
-                                <template x-if="expandedAlert.metadata?.headers && expandedAlert.metadata.headers !== 'N/A'">
-                                    <pre class="gd-mono" style="margin:0; white-space:pre-wrap; font-size:12px;" x-text="expandedAlert.metadata.headers"></pre>
-                                </template>
-                            </div>
-
-                            <template x-if="expandedAlert.metadata?.stack_trace">
-                                <div style="margin-top:12px;">
-                                    <strong>Stack Trace:</strong>
-                                    <pre class="gd-mono" style="margin-top:4px; padding:12px; border-radius:6px; background:var(--gd-bg); font-size:11px; overflow-x:auto; white-space:pre-wrap;" x-text="expandedAlert.metadata.stack_trace"></pre>
-                                </div>
-                            </template>
-                        </div>
+                <!-- Empty state -->
+                <template x-if="!data?.alerts?.data?.length">
+                    <div class="gd-empty">
+                        <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        <div class="gd-empty__text">No alerts found</div>
+                        <div class="gd-empty__hint">Alerts appear when monitoring thresholds are exceeded</div>
                     </div>
                 </template>
 
-                <!-- Pagination -->
-                <template x-if="data.alerts.last_page > 1">
-                    <div class="gd-pagination">
-                        <span x-text="`Showing ${data.alerts.from}-${data.alerts.to} of ${data.alerts.total}`"></span>
-                        <div class="gd-pagination__links">
-                            <button class="gd-pagination__link" :disabled="!data.alerts.prev_page_url" @click="goToPage(data.alerts.current_page - 1)">Prev</button>
-                            <button class="gd-pagination__link" :disabled="!data.alerts.next_page_url" @click="goToPage(data.alerts.current_page + 1)">Next</button>
+                <!-- Table -->
+                <template x-if="data?.alerts?.data?.length > 0">
+                    <div>
+                        <div class="gd-table-wrapper">
+                            <table class="gd-table">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Status</th>
+                                        <th>Source</th>
+                                        <th>Message</th>
+                                        <th style="width:120px">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="alert in data.alerts.data" :key="alert.id">
+                                        <tr>
+                                            <td style="white-space:nowrap; font-size:12px; color:var(--tw-text-opacity, #64748b);" x-text="formatDate(alert.notified_at || alert.created_at)"></td>
+                                            <td>
+                                                <span class="gd-badge" :class="statusBadgeClass(alert.status)" x-text="alert.status"></span>
+                                            </td>
+                                            <td class="gd-mono" style="max-width:180px;" x-text="formatSource(alert.check_class)"></td>
+                                            <td style="max-width:400px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" x-text="alert.message"></td>
+                                            <td>
+                                                <div style="display:flex; gap:4px;">
+                                                    <button class="gd-btn gd-btn--sm" @click="toggleDetail(alert)" x-text="expandedId === alert.id ? 'Hide' : 'Details'"></button>
+                                                    <button class="gd-btn gd-btn--sm" @click="copyAsMarkdown(alert)" title="Copy as Markdown for AI">MD</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
                         </div>
+
+                        <!-- Expanded detail -->
+                        <template x-if="expandedAlert">
+                            <div style="margin:16px; padding:20px; border-radius:8px; border:1px solid hsl(214.3 31.8% 91.4%); background:hsl(210 40% 96.1%);">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                                    <span style="font-size:14px; font-weight:600;">Alert Detail</span>
+                                    <button class="gd-btn gd-btn--sm" @click="copyAsMarkdown(expandedAlert)">Copy as Markdown for AI</button>
+                                </div>
+                                <div style="display:flex; flex-direction:column; gap:10px; font-size:13px;">
+                                    <div style="display:flex; gap:12px;">
+                                        <span style="width:100px; font-weight:600; color:#64748b; flex-shrink:0;">Status</span>
+                                        <span class="gd-badge" :class="statusBadgeClass(expandedAlert.status)" x-text="expandedAlert.status"></span>
+                                    </div>
+                                    <div style="display:flex; gap:12px;">
+                                        <span style="width:100px; font-weight:600; color:#64748b; flex-shrink:0;">Source</span>
+                                        <span class="gd-mono" x-text="expandedAlert.check_class" style="word-break:break-all;"></span>
+                                    </div>
+                                    <div style="display:flex; gap:12px;">
+                                        <span style="width:100px; font-weight:600; color:#64748b; flex-shrink:0;">Message</span>
+                                        <span x-text="expandedAlert.message"></span>
+                                    </div>
+                                    <div style="display:flex; gap:12px;">
+                                        <span style="width:100px; font-weight:600; color:#64748b; flex-shrink:0;">Time</span>
+                                        <span x-text="formatDate(expandedAlert.notified_at || expandedAlert.created_at)"></span>
+                                    </div>
+                                    <template x-if="expandedAlert.metadata?.exception_class">
+                                        <div style="display:flex; gap:12px;">
+                                            <span style="width:100px; font-weight:600; color:#64748b; flex-shrink:0;">Exception</span>
+                                            <span class="gd-mono" x-text="expandedAlert.metadata.exception_class" style="word-break:break-all;"></span>
+                                        </div>
+                                    </template>
+                                    <template x-if="expandedAlert.metadata?.file">
+                                        <div style="display:flex; gap:12px;">
+                                            <span style="width:100px; font-weight:600; color:#64748b; flex-shrink:0;">File</span>
+                                            <span class="gd-mono" x-text="expandedAlert.metadata.file + ':' + (expandedAlert.metadata.line || '')"></span>
+                                        </div>
+                                    </template>
+                                    <template x-if="expandedAlert.metadata?.url && expandedAlert.metadata.url !== 'N/A'">
+                                        <div style="display:flex; gap:12px;">
+                                            <span style="width:100px; font-weight:600; color:#64748b; flex-shrink:0;">URL</span>
+                                            <span class="gd-mono" x-text="expandedAlert.metadata.url"></span>
+                                        </div>
+                                    </template>
+                                    <template x-if="expandedAlert.metadata?.status_code">
+                                        <div style="display:flex; gap:12px;">
+                                            <span style="width:100px; font-weight:600; color:#64748b; flex-shrink:0;">HTTP Status</span>
+                                            <span x-text="expandedAlert.metadata.status_code"></span>
+                                        </div>
+                                    </template>
+                                    <template x-if="expandedAlert.metadata?.user && expandedAlert.metadata.user !== 'N/A'">
+                                        <div style="display:flex; gap:12px;">
+                                            <span style="width:100px; font-weight:600; color:#64748b; flex-shrink:0;">User</span>
+                                            <span x-text="expandedAlert.metadata.user"></span>
+                                        </div>
+                                    </template>
+                                    <template x-if="expandedAlert.metadata?.ip && expandedAlert.metadata.ip !== 'N/A'">
+                                        <div style="display:flex; gap:12px;">
+                                            <span style="width:100px; font-weight:600; color:#64748b; flex-shrink:0;">IP</span>
+                                            <span x-text="expandedAlert.metadata.ip"></span>
+                                        </div>
+                                    </template>
+                                    <template x-if="expandedAlert.metadata?.headers && expandedAlert.metadata.headers !== 'N/A'">
+                                        <div style="display:flex; flex-direction:column; gap:4px;">
+                                            <span style="font-weight:600; color:#64748b;">Headers</span>
+                                            <pre class="gd-mono" style="margin:0; padding:10px; border-radius:6px; background:white; border:1px solid hsl(214.3 31.8% 91.4%); font-size:11px; white-space:pre-wrap; overflow-x:auto;" x-text="expandedAlert.metadata.headers"></pre>
+                                        </div>
+                                    </template>
+                                    <template x-if="expandedAlert.metadata?.stack_trace">
+                                        <div style="display:flex; flex-direction:column; gap:4px;">
+                                            <span style="font-weight:600; color:#64748b;">Stack Trace</span>
+                                            <pre class="gd-mono" style="margin:0; padding:10px; border-radius:6px; background:white; border:1px solid hsl(214.3 31.8% 91.4%); font-size:11px; white-space:pre-wrap; overflow-x:auto;" x-text="expandedAlert.metadata.stack_trace"></pre>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Pagination -->
+                        <template x-if="data.alerts.last_page > 1">
+                            <div class="gd-pagination">
+                                <span x-text="`Showing ${data.alerts.from}-${data.alerts.to} of ${data.alerts.total}`"></span>
+                                <div class="gd-pagination__links">
+                                    <button class="gd-pagination__link" :disabled="!data.alerts.prev_page_url" @click="goToPage(data.alerts.current_page - 1)">Prev</button>
+                                    <button class="gd-pagination__link" :disabled="!data.alerts.next_page_url" @click="goToPage(data.alerts.current_page + 1)">Next</button>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </template>
             </div>
         </div>
-    </template>
-
-    <!-- Toast notification -->
-    <div x-show="copyToast" x-transition class="gd-toast" style="position:fixed; bottom:20px; right:20px; background:#10b981; color:white; padding:10px 20px; border-radius:8px; font-size:13px; z-index:9999; box-shadow:0 4px 12px rgba(0,0,0,.2);">
-        Copied as Markdown!
     </div>
+
+    <!-- Toast -->
+    <div x-show="copyToast" x-transition class="gd-toast">Copied as Markdown!</div>
 </div>
 @endsection
 
@@ -254,24 +288,19 @@ function alertsPage() {
             md += `- **Time:** ${alert.notified_at || alert.created_at}\n`;
             md += `- **Source:** ${alert.check_class}\n`;
             md += `- **Message:** ${alert.message}\n`;
-
             if (meta.exception_class) md += `- **Exception:** ${meta.exception_class}\n`;
             if (meta.file) md += `- **File:** ${meta.file}${meta.line ? ':' + meta.line : ''}\n`;
             if (meta.url && meta.url !== 'N/A') md += `- **URL:** ${meta.url}\n`;
             if (meta.status_code) md += `- **HTTP Status:** ${meta.status_code}\n`;
             if (meta.user && meta.user !== 'N/A') md += `- **User:** ${meta.user}\n`;
             if (meta.ip && meta.ip !== 'N/A') md += `- **IP:** ${meta.ip}\n`;
-
             if (meta.headers && meta.headers !== 'N/A') {
                 md += `\n### Headers\n\`\`\`\n${meta.headers}\n\`\`\`\n`;
             }
-
             if (meta.stack_trace) {
                 md += `\n### Stack Trace\n\`\`\`\n${meta.stack_trace}\n\`\`\`\n`;
             }
-
             md += `\n---\n*Please analyze this error and suggest a fix. Include the root cause and any code changes needed.*\n`;
-
             navigator.clipboard.writeText(md).then(() => {
                 this.copyToast = true;
                 setTimeout(() => { this.copyToast = false; }, 2000);

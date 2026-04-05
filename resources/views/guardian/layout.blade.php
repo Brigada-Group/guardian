@@ -115,7 +115,7 @@
             font-weight: 500;
         }
         .dark .gd-card__header { border-bottom-color: #27272a; }
-        .gd-card__body { padding: 1.25rem; }
+        .gd-card__body { padding: 1.5rem; }
 
         .gd-table-wrapper { overflow-x: auto; }
         .gd-table { width: 100%; font-size: 0.875rem; }
@@ -141,19 +141,19 @@
         .gd-metrics {
             display: grid;
             grid-template-columns: repeat(6, minmax(0, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.5rem;
+            gap: 1.25rem;
+            margin-bottom: 1.75rem;
         }
         @media (max-width: 1280px) { .gd-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
         @media (max-width: 768px) { .gd-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
         @media (max-width: 640px) { .gd-metrics { grid-template-columns: minmax(0, 1fr); } }
 
-        .gd-grid { display: grid; gap: 1.25rem; margin-bottom: 1.25rem; }
+        .gd-grid { display: grid; gap: 1.5rem; margin-bottom: 1.5rem; }
         .gd-grid--2 { grid-template-columns: repeat(2, 1fr); }
         .gd-grid--3 { grid-template-columns: repeat(3, 1fr); }
         .gd-grid--4 { grid-template-columns: repeat(4, 1fr); }
-        @media (max-width: 1024px) { .gd-grid--2, .gd-grid--3, .gd-grid--4 { grid-template-columns: 1fr; } }
-        @media (max-width: 768px) { .gd-grid--2 { grid-template-columns: 1fr; } }
+        @media (max-width: 1024px) { .gd-grid--2, .gd-grid--3 { grid-template-columns: 1fr; } .gd-grid--4 { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) { .gd-grid--2, .gd-grid--4 { grid-template-columns: 1fr; } }
 
         .gd-badge {
             display: inline-flex;
@@ -614,7 +614,7 @@
                 </button>
             </div>
         </header>
-        <div class="p-6">
+        <div class="p-6 lg:p-8">
             @yield('content')
         </div>
     </main>
