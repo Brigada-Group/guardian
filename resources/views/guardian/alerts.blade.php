@@ -6,7 +6,7 @@
 <div x-data="alertsPage()" x-init="init()">
     <!-- Summary cards -->
     <div class="gd-grid gd-grid--4" style="margin-bottom:20px;">
-        <template x-if="data">
+        <div x-show="loaded" x-cloak>
             <div class="gd-grid gd-grid--4" style="grid-column: 1/-1;">
                 @include('guardian::guardian.partials.metric-card', ['xValue' => 'data.summary.total_24h', 'title' => 'Alerts (24h)', 'color' => 'blue'])
                 @include('guardian::guardian.partials.metric-card', ['xValue' => 'data.summary.critical_24h', 'title' => 'Critical', 'color' => 'red'])
@@ -36,11 +36,11 @@
         </div>
     </div>
 
-    <template x-if="loading && !data">
+    <div x-show="loading && !loaded">
         <div class="gd-skeleton-grid"><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--chart"></div></div>
-    </template>
+    </div>
 
-    <template x-if="data">
+    <div x-show="loaded" x-cloak>
         <div class="gd-card">
             <div class="gd-card__header">Alert History</div>
             <div class="gd-card__body" style="padding:0">
@@ -184,7 +184,7 @@
 function alertsPage() {
     return {
         loading: true,
-        data: null,
+        data: null, loaded: false,
         dateRange: '24h',
         filters: { status: '', type: '' },
         page: 1,
@@ -211,7 +211,7 @@ function alertsPage() {
                 if (this.filters.status) params.status = this.filters.status;
                 if (this.filters.type) params.type = this.filters.type;
                 const res = await guardianFetch('{{ route("guardian.api.alerts") }}', params);
-                this.data = res.data;
+                this.data = res.data; this.loaded = true;
             } catch (e) { console.error('Alerts fetch failed', e); }
             this.loading = false;
         },

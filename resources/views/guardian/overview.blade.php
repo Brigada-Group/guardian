@@ -5,25 +5,22 @@
 @section('content')
 <div x-data="overviewPage()" x-init="init()">
     <!-- Loading skeleton -->
-    <template x-if="loading && !data">
-        <div class="gd-loading gd-fade-in">
-            <div class="gd-skeleton-grid">
-                <div class="gd-skeleton gd-skeleton--card"></div>
-                <div class="gd-skeleton gd-skeleton--card"></div>
-                <div class="gd-skeleton gd-skeleton--card"></div>
-                <div class="gd-skeleton gd-skeleton--card"></div>
-                <div class="gd-skeleton gd-skeleton--card"></div>
-                <div class="gd-skeleton gd-skeleton--card"></div>
-            </div>
-            <div class="gd-grid gd-grid--2">
-                <div class="gd-skeleton gd-skeleton--chart"></div>
-                <div class="gd-skeleton gd-skeleton--chart"></div>
-            </div>
+    <div x-show="loading && !loaded" class="gd-loading gd-fade-in">
+        <div class="gd-skeleton-grid">
+            <div class="gd-skeleton gd-skeleton--card"></div>
+            <div class="gd-skeleton gd-skeleton--card"></div>
+            <div class="gd-skeleton gd-skeleton--card"></div>
+            <div class="gd-skeleton gd-skeleton--card"></div>
+            <div class="gd-skeleton gd-skeleton--card"></div>
+            <div class="gd-skeleton gd-skeleton--card"></div>
         </div>
-    </template>
+        <div class="gd-grid gd-grid--2">
+            <div class="gd-skeleton gd-skeleton--chart"></div>
+            <div class="gd-skeleton gd-skeleton--chart"></div>
+        </div>
+    </div>
 
-    <template x-if="data">
-        <div class="gd-fade-in">
+    <div x-show="loaded" x-cloak class="gd-fade-in">
             <!-- Metric cards -->
             <div class="gd-metrics">
                 <div class="gd-stat-card">
@@ -31,42 +28,42 @@
                         <span class="gd-stat-card__dot" style="background: var(--gd-accent)"></span>
                         <span class="gd-stat-card__label">Total Requests (24h)</span>
                     </div>
-                    <div class="gd-stat-card__value" x-text="Number(data.metrics.totalRequests).toLocaleString()"></div>
+                    <div class="gd-stat-card__value" x-text="Number(data?.metrics?.totalRequests).toLocaleString()"></div>
                 </div>
-                <div class="gd-stat-card" :class="{ 'gd-stat-card--alert': data.metrics.errorRate > 5 }">
+                <div class="gd-stat-card" :class="{ 'gd-stat-card--alert': data?.metrics?.errorRate > 5 }">
                     <div class="gd-stat-card__header">
                         <span class="gd-stat-card__dot" style="background: var(--gd-danger)"></span>
                         <span class="gd-stat-card__label">Error Rate</span>
                     </div>
-                    <div class="gd-stat-card__value" x-text="data.metrics.errorRate + '%'"></div>
+                    <div class="gd-stat-card__value" x-text="data?.metrics?.errorRate + '%'"></div>
                 </div>
                 <div class="gd-stat-card">
                     <div class="gd-stat-card__header">
                         <span class="gd-stat-card__dot" style="background: var(--gd-info)"></span>
                         <span class="gd-stat-card__label">Avg Response Time</span>
                     </div>
-                    <div class="gd-stat-card__value" x-text="formatMs(data.metrics.avgResponseTime)"></div>
+                    <div class="gd-stat-card__value" x-text="formatMs(data?.metrics?.avgResponseTime)"></div>
                 </div>
                 <div class="gd-stat-card">
                     <div class="gd-stat-card__header">
                         <span class="gd-stat-card__dot" style="background: var(--gd-success)"></span>
                         <span class="gd-stat-card__label">Cache Hit Rate</span>
                     </div>
-                    <div class="gd-stat-card__value" x-text="data.metrics.cacheHitRate + '%'"></div>
+                    <div class="gd-stat-card__value" x-text="data?.metrics?.cacheHitRate + '%'"></div>
                 </div>
-                <div class="gd-stat-card" :class="{ 'gd-stat-card--alert': data.metrics.failedCommands > 0 }">
+                <div class="gd-stat-card" :class="{ 'gd-stat-card--alert': data?.metrics?.failedCommands > 0 }">
                     <div class="gd-stat-card__header">
                         <span class="gd-stat-card__dot" style="background: var(--gd-warning)"></span>
                         <span class="gd-stat-card__label">Failed Commands (24h)</span>
                     </div>
-                    <div class="gd-stat-card__value" x-text="data.metrics.failedCommands"></div>
+                    <div class="gd-stat-card__value" x-text="data?.metrics?.failedCommands"></div>
                 </div>
-                <div class="gd-stat-card" :class="{ 'gd-stat-card--alert': data.metrics.exceptionCount > 0 }">
+                <div class="gd-stat-card" :class="{ 'gd-stat-card--alert': data?.metrics?.exceptionCount > 0 }">
                     <div class="gd-stat-card__header">
                         <span class="gd-stat-card__dot" style="background: var(--gd-danger)"></span>
                         <span class="gd-stat-card__label">Exceptions (24h)</span>
                     </div>
-                    <div class="gd-stat-card__value" x-text="data.metrics.exceptionCount"></div>
+                    <div class="gd-stat-card__value" x-text="data?.metrics?.exceptionCount"></div>
                 </div>
             </div>
 
@@ -94,14 +91,14 @@
             <div class="gd-card">
                 <div class="gd-card__header">Recent Alerts</div>
                 <div class="gd-card__body" style="padding:0">
-                    <template x-if="data.recent_alerts.length === 0">
+                    <template x-if="data?.recent_alerts.length === 0">
                         <div class="gd-empty">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                             <div class="gd-empty__text">No recent alerts</div>
                             <div class="gd-empty__hint">Alerts will appear here when thresholds are exceeded</div>
                         </div>
                     </template>
-                    <template x-if="data.recent_alerts.length > 0">
+                    <template x-if="data?.recent_alerts.length > 0">
                         <div class="gd-table-wrapper">
                             <table class="gd-table">
                                 <thead>
@@ -113,7 +110,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <template x-for="alert in data.recent_alerts" :key="alert.notified_at">
+                                    <template x-for="alert in data?.recent_alerts" :key="alert.notified_at">
                                         <tr>
                                             <td class="gd-mono" x-text="alert.check_class"></td>
                                             <td>
@@ -138,42 +135,42 @@
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 32px;">
                             <div style="display:flex; justify-content:space-between; padding: 8px 0; border-bottom: 1px solid var(--gd-border);">
                                 <span style="font-size:13px; color:var(--gd-text-secondary)">Slow Request</span>
-                                <span style="font-size:13px; font-weight:600" x-text="data.thresholds.slow_request_ms + 'ms'"></span>
+                                <span style="font-size:13px; font-weight:600" x-text="data?.thresholds?.slow_request_ms + 'ms'"></span>
                             </div>
                             <div style="display:flex; justify-content:space-between; padding: 8px 0; border-bottom: 1px solid var(--gd-border);">
                                 <span style="font-size:13px; color:var(--gd-text-secondary)">Error Rate Alert</span>
-                                <span style="font-size:13px; font-weight:600" x-text="data.thresholds.error_rate_threshold + ' errors'"></span>
+                                <span style="font-size:13px; font-weight:600" x-text="data?.thresholds?.error_rate_threshold + ' errors'"></span>
                             </div>
                             <div style="display:flex; justify-content:space-between; padding: 8px 0; border-bottom: 1px solid var(--gd-border);">
                                 <span style="font-size:13px; color:var(--gd-text-secondary)">Slow Query</span>
-                                <span style="font-size:13px; font-weight:600" x-text="data.thresholds.slow_query_ms + 'ms'"></span>
+                                <span style="font-size:13px; font-weight:600" x-text="data?.thresholds?.slow_query_ms + 'ms'"></span>
                             </div>
                             <div style="display:flex; justify-content:space-between; padding: 8px 0; border-bottom: 1px solid var(--gd-border);">
                                 <span style="font-size:13px; color:var(--gd-text-secondary)">N+1 Detection</span>
-                                <span style="font-size:13px; font-weight:600" x-text="data.thresholds.n_plus_one_threshold + ' repeats'"></span>
+                                <span style="font-size:13px; font-weight:600" x-text="data?.thresholds?.n_plus_one_threshold + ' repeats'"></span>
                             </div>
                             <div style="display:flex; justify-content:space-between; padding: 8px 0; border-bottom: 1px solid var(--gd-border);">
                                 <span style="font-size:13px; color:var(--gd-text-secondary)">Slow HTTP Call</span>
-                                <span style="font-size:13px; font-weight:600" x-text="data.thresholds.slow_http_ms + 'ms'"></span>
+                                <span style="font-size:13px; font-weight:600" x-text="data?.thresholds?.slow_http_ms + 'ms'"></span>
                             </div>
                             <div style="display:flex; justify-content:space-between; padding: 8px 0; border-bottom: 1px solid var(--gd-border);">
                                 <span style="font-size:13px; color:var(--gd-text-secondary)">Slow Command</span>
-                                <span style="font-size:13px; font-weight:600" x-text="(data.thresholds.slow_command_ms / 1000) + 's'"></span>
+                                <span style="font-size:13px; font-weight:600" x-text="(data?.thresholds?.slow_command_ms / 1000) + 's'"></span>
                             </div>
                             <div style="display:flex; justify-content:space-between; padding: 8px 0; border-bottom: 1px solid var(--gd-border);">
                                 <span style="font-size:13px; color:var(--gd-text-secondary)">Slow Scheduled Task</span>
-                                <span style="font-size:13px; font-weight:600" x-text="(data.thresholds.slow_task_ms / 1000) + 's'"></span>
+                                <span style="font-size:13px; font-weight:600" x-text="(data?.thresholds?.slow_task_ms / 1000) + 's'"></span>
                             </div>
                             <div style="display:flex; justify-content:space-between; padding: 8px 0; border-bottom: 1px solid var(--gd-border);">
                                 <span style="font-size:13px; color:var(--gd-text-secondary)">Low Cache Hit Rate</span>
-                                <span style="font-size:13px; font-weight:600" x-text="data.thresholds.low_cache_hit_rate + '%'"></span>
+                                <span style="font-size:13px; font-weight:600" x-text="data?.thresholds?.low_cache_hit_rate + '%'"></span>
                             </div>
                         </div>
                     </div>
                 </div>
             </template>
         </div>
-    </template>
+    </div>
 </div>
 @endsection
 
@@ -182,6 +179,7 @@
 function overviewPage() {
     return {
         loading: true,
+        loaded: false,
         data: null,
         pollInterval: {{ $pollInterval }} * 1000,
         pollTimer: null,
@@ -196,9 +194,9 @@ function overviewPage() {
             this.loading = true;
             try {
                 const res = await guardianFetch('{{ route("guardian.api.overview") }}');
-                destroyAllCharts(this.charts);
                 this.data = res.data;
-                this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
+                this.loaded = true;
+                this.$nextTick(() => this.renderCharts());
             } catch (e) { console.error('Overview fetch failed', e); }
             this.loading = false;
         },
@@ -215,18 +213,35 @@ function overviewPage() {
         renderCharts() {
             const isDark = document.documentElement.classList.contains('gd-dark');
             const colors = getChartColors(isDark);
+            const rtLabels = (this.data?.response_time_chart || []).map(d => formatDateShort(d.hour));
+            const rtData = (this.data?.response_time_chart || []).map(d => Math.round(d.avg_ms));
+            const errLabels = (this.data?.error_chart || []).map(d => formatDateShort(d.hour));
+            const errData = (this.data?.error_chart || []).map(d => d.count);
 
-            // Response time chart — area with gradient fill
+            // Update existing charts if they exist (no destroy/recreate)
+            if (this.charts.responseTime) {
+                this.charts.responseTime.data.labels = rtLabels;
+                this.charts.responseTime.data.datasets[0].data = rtData;
+                this.charts.responseTime.update('none');
+            }
+            if (this.charts.error) {
+                this.charts.error.data.labels = errLabels;
+                this.charts.error.data.datasets[0].data = errData;
+                this.charts.error.update('none');
+            }
+            if (this.charts.responseTime && this.charts.error) return;
+
+            // First render only — create charts
             const rtCtx = this.$refs.responseTimeChart;
-            if (rtCtx) {
+            if (rtCtx && !this.charts.responseTime) {
                 const rtGradient = createChartGradient(rtCtx, colors.blue, 260);
                 this.charts.responseTime = SafeChart(rtCtx, {
                     type: 'line',
                     data: {
-                        labels: (this.data.response_time_chart || []).map(d => formatDateShort(d.hour)),
+                        labels: rtLabels,
                         datasets: [{
                             label: 'Avg Response Time (ms)',
-                            data: (this.data.response_time_chart || []).map(d => Math.round(d.avg_ms)),
+                            data: rtData,
                             borderColor: colors.blue,
                             backgroundColor: rtGradient,
                             fill: true,
@@ -264,14 +279,14 @@ function overviewPage() {
 
             // Error chart — bar with rounded corners
             const errCtx = this.$refs.errorChart;
-            if (errCtx) {
+            if (errCtx && !this.charts.error) {
                 this.charts.error = SafeChart(errCtx, {
                     type: 'bar',
                     data: {
-                        labels: (this.data.error_chart || []).map(d => formatDateShort(d.hour)),
+                        labels: errLabels,
                         datasets: [{
                             label: 'Errors',
-                            data: (this.data.error_chart || []).map(d => d.count),
+                            data: errData,
                             backgroundColor: colors.red + '60',
                             hoverBackgroundColor: colors.red + '90',
                             borderColor: colors.red,

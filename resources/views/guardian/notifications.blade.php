@@ -22,11 +22,11 @@
         </div>
     </div>
 
-    <template x-if="loading && !data">
+    <div x-show="loading && !loaded">
         <div class="gd-skeleton-grid"><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--chart"></div></div>
-    </template>
+    </div>
 
-    <template x-if="data">
+    <div x-show="loaded" x-cloak>
         <div>
             <!-- Channel breakdown -->
             <div class="gd-grid gd-grid--2">
@@ -100,7 +100,7 @@
                 </div>
             </div>
         </div>
-    </template>
+    </div>
 </div>
 @endsection
 
@@ -109,7 +109,7 @@
 function notificationsPage() {
     return {
         loading: true,
-        data: null,
+        data: null, loaded: false,
         filters: { channel: '', status: '' },
         page: 1,
         pollInterval: {{ $pollInterval }} * 1000,
@@ -127,8 +127,7 @@ function notificationsPage() {
                 if (this.filters.channel) params.channel = this.filters.channel;
                 if (this.filters.status) params.status = this.filters.status;
                 const res = await guardianFetch('{{ route("guardian.api.notifications") }}', params);
-                destroyAllCharts(this.charts);
-                this.data = res.data;
+                this.data = res.data; this.loaded = true;
                 this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Notifications fetch failed', e); }
             this.loading = false;

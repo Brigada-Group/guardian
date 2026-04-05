@@ -4,11 +4,11 @@
 
 @section('content')
 <div x-data="cachePage()" x-init="init()">
-    <template x-if="loading && !data">
+    <div x-show="loading && !loaded">
         <div class="gd-skeleton-grid"><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--chart"></div></div>
-    </template>
+    </div>
 
-    <template x-if="data">
+    <div x-show="loaded" x-cloak>
         <div>
             <!-- Top metrics -->
             <div class="gd-metrics">
@@ -90,7 +90,7 @@
                 </div>
             </div>
         </div>
-    </template>
+    </div>
 </div>
 @endsection
 
@@ -99,7 +99,7 @@
 function cachePage() {
     return {
         loading: true,
-        data: null,
+        data: null, loaded: false,
         pollInterval: {{ $pollInterval }} * 1000,
         charts: {},
 
@@ -112,8 +112,7 @@ function cachePage() {
             this.loading = true;
             try {
                 const res = await guardianFetch('{{ route("guardian.api.cache") }}');
-                destroyAllCharts(this.charts);
-                this.data = res.data;
+                this.data = res.data; this.loaded = true;
                 this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Cache fetch failed', e); }
             this.loading = false;

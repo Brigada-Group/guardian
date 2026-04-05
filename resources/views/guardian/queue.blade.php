@@ -19,11 +19,11 @@
         </div>
     </div>
 
-    <template x-if="loading && !data">
+    <div x-show="loading && !loaded">
         <div class="gd-skeleton-grid"><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--chart"></div></div>
-    </template>
+    </div>
 
-    <template x-if="data">
+    <div x-show="loaded" x-cloak>
         <div class="gd-fade-in">
             <!-- Metric cards -->
             <div class="gd-metrics">
@@ -215,7 +215,7 @@
 function queuePage() {
     return {
         loading: true,
-        data: null,
+        data: null, loaded: false,
         dateRange: '24h',
         filters: { status: '', queue: '', job_class: '' },
         page: 1,
@@ -244,8 +244,7 @@ function queuePage() {
                 if (this.filters.queue) params.queue = this.filters.queue;
                 if (this.filters.job_class) params.job_class = this.filters.job_class;
                 const res = await guardianFetch('{{ route("guardian.api.queue") }}', params);
-                destroyAllCharts(this.charts);
-                this.data = res.data;
+                this.data = res.data; this.loaded = true;
                 this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Queue fetch failed', e); }
             this.loading = false;

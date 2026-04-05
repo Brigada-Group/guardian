@@ -11,11 +11,11 @@
         </div>
     </div>
 
-    <template x-if="loading && !data">
+    <div x-show="loading && !loaded">
         <div class="gd-skeleton-grid"><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--chart"></div></div>
-    </template>
+    </div>
 
-    <template x-if="data">
+    <div x-show="loaded" x-cloak>
         <div>
             <!-- Trend chart -->
             <div class="gd-card">
@@ -86,7 +86,7 @@
                 </div>
             </div>
         </div>
-    </template>
+    </div>
 </div>
 @endsection
 
@@ -95,7 +95,7 @@
 function exceptionsPage() {
     return {
         loading: true,
-        data: null,
+        data: null, loaded: false,
         dateRange: '24h',
         expanded: null,
         page: 1,
@@ -118,8 +118,7 @@ function exceptionsPage() {
             try {
                 const params = { ...dateRangeToParams(this.dateRange), page: this.page };
                 const res = await guardianFetch('{{ route("guardian.api.exceptions") }}', params);
-                destroyAllCharts(this.charts);
-                this.data = res.data;
+                this.data = res.data; this.loaded = true;
                 this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Exceptions fetch failed', e); }
             this.loading = false;

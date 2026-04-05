@@ -21,11 +21,11 @@
         </div>
     </div>
 
-    <template x-if="loading && !data">
+    <div x-show="loading && !loaded">
         <div class="gd-skeleton-grid"><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--chart"></div></div>
-    </template>
+    </div>
 
-    <template x-if="data">
+    <div x-show="loaded" x-cloak>
         <div class="gd-fade-in">
             <!-- Metric cards -->
             <div class="gd-metrics">
@@ -176,7 +176,7 @@
 function logsPage() {
     return {
         loading: true,
-        data: null,
+        data: null, loaded: false,
         dateRange: '24h',
         filters: { level: '', channel: '', search: '' },
         page: 1,
@@ -205,8 +205,7 @@ function logsPage() {
                 if (this.filters.channel) params.channel = this.filters.channel;
                 if (this.filters.search) params.search = this.filters.search;
                 const res = await guardianFetch('{{ route("guardian.api.logs") }}', params);
-                destroyAllCharts(this.charts);
-                this.data = res.data;
+                this.data = res.data; this.loaded = true;
                 this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Logs fetch failed', e); }
             this.loading = false;

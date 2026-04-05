@@ -14,11 +14,11 @@
         </div>
     </div>
 
-    <template x-if="loading && !data">
+    <div x-show="loading && !loaded">
         <div class="gd-skeleton-grid"><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--chart"></div></div>
-    </template>
+    </div>
 
-    <template x-if="data">
+    <div x-show="loaded" x-cloak>
         <div>
             <!-- By host chart + table -->
             <div class="gd-grid gd-grid--2">
@@ -96,7 +96,7 @@
                 </div>
             </div>
         </div>
-    </template>
+    </div>
 </div>
 @endsection
 
@@ -105,7 +105,7 @@
 function outgoingHttpPage() {
     return {
         loading: true,
-        data: null,
+        data: null, loaded: false,
         dateRange: '24h',
         failedOnly: false,
         page: 1,
@@ -129,8 +129,7 @@ function outgoingHttpPage() {
                 const params = { ...dateRangeToParams(this.dateRange), page: this.page };
                 if (this.failedOnly) params.failed_only = 1;
                 const res = await guardianFetch('{{ route("guardian.api.outgoing-http") }}', params);
-                destroyAllCharts(this.charts);
-                this.data = res.data;
+                this.data = res.data; this.loaded = true;
                 this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Outgoing HTTP fetch failed', e); }
             this.loading = false;

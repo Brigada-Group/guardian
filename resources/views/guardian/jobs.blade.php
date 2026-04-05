@@ -10,11 +10,11 @@
         <div class="gd-tab" :class="{ 'active': tab === 'scheduled' }" @click="tab = 'scheduled'; fetchData()">Scheduled Tasks</div>
     </div>
 
-    <template x-if="loading && !data">
+    <div x-show="loading && !loaded">
         <div class="gd-skeleton-grid"><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--chart"></div></div>
-    </template>
+    </div>
 
-    <template x-if="data">
+    <div x-show="loaded" x-cloak>
         <div>
             <!-- Charts -->
             <div class="gd-card">
@@ -110,7 +110,7 @@
                 </div>
             </template>
         </div>
-    </template>
+    </div>
 </div>
 @endsection
 
@@ -119,7 +119,7 @@
 function jobsPage() {
     return {
         loading: true,
-        data: null,
+        data: null, loaded: false,
         tab: 'commands',
         page: 1,
         pollInterval: {{ $pollInterval }} * 1000,
@@ -135,8 +135,7 @@ function jobsPage() {
             try {
                 const params = { tab: this.tab, page: this.page };
                 const res = await guardianFetch('{{ route("guardian.api.jobs") }}', params);
-                destroyAllCharts(this.charts);
-                this.data = res.data;
+                this.data = res.data; this.loaded = true;
                 this.$nextTick(() => { this.$nextTick(() => this.renderCharts()); });
             } catch (e) { console.error('Jobs fetch failed', e); }
             this.loading = false;
