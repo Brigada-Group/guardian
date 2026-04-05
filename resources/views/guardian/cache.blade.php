@@ -3,13 +3,12 @@
 @section('page-title', 'Cache')
 
 @section('content')
-<div x-data="cachePage()" x-init="init()">
+<div x-data="cachePage()" x-init="init()" class="space-y-6">
     <div x-show="loading && !loaded">
         <div class="gd-skeleton-grid"><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--chart"></div></div>
     </div>
 
-    <div x-show="loaded" x-cloak>
-        <div>
+    <div x-show="loaded" x-cloak class="space-y-6">
             <!-- Top metrics -->
             <div class="gd-metrics">
                 <div class="gd-stat-card">
@@ -89,7 +88,6 @@
                     </div>
                 </div>
             </div>
-        </div>
     </div>
 </div>
 @endsection

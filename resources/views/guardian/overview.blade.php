@@ -3,7 +3,7 @@
 @section('page-title', 'Overview')
 
 @section('content')
-<div x-data="overviewPage()" x-init="init()">
+<div x-data="overviewPage()" x-init="init()" class="space-y-6">
     <!-- Loading skeleton -->
     <div x-show="loading && !loaded" class="gd-loading gd-fade-in">
         <div class="gd-skeleton-grid">
@@ -20,7 +20,7 @@
         </div>
     </div>
 
-    <div x-show="loaded" x-cloak class="gd-fade-in">
+    <div x-show="loaded" x-cloak class="gd-fade-in space-y-6">
             <!-- Metric cards -->
             <div class="gd-metrics">
                 <div class="gd-stat-card">

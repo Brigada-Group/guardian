@@ -3,7 +3,7 @@
 @section('page-title', 'Jobs & Scheduler')
 
 @section('content')
-<div x-data="jobsPage()" x-init="init()">
+<div x-data="jobsPage()" x-init="init()" class="space-y-6">
     <!-- Tabs -->
     <div class="gd-tabs">
         <div class="gd-tab" :class="{ 'active': tab === 'commands' }" @click="tab = 'commands'; fetchData()">Commands</div>
@@ -14,8 +14,7 @@
         <div class="gd-skeleton-grid"><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--chart"></div></div>
     </div>
 
-    <div x-show="loaded" x-cloak>
-        <div>
+    <div x-show="loaded" x-cloak class="space-y-6">
             <!-- Charts -->
             <div class="gd-card">
                 <div class="gd-card__header" x-text="tab === 'commands' ? 'Exit Codes' : 'Status Breakdown'"></div>
@@ -109,7 +108,6 @@
                     </div>
                 </div>
             </template>
-        </div>
     </div>
 </div>
 @endsection

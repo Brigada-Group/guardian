@@ -3,7 +3,7 @@
 @section('page-title', 'Requests')
 
 @section('content')
-<div x-data="requestsPage()" x-init="init()">
+<div x-data="requestsPage()" x-init="init()" class="space-y-6">
     <!-- Filters -->
     <div class="gd-card">
         <div class="gd-card__body" style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
@@ -26,8 +26,7 @@
         <div class="gd-skeleton-grid"><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--chart"></div></div>
     </div>
 
-    <div x-show="loaded" x-cloak>
-        <div>
+    <div x-show="loaded" x-cloak class="space-y-6">
             <!-- Histogram -->
             <div class="gd-grid gd-grid--2">
                 <div class="gd-card">
@@ -101,7 +100,6 @@
                     </template>
                 </div>
             </div>
-        </div>
     </div>
 </div>
 @endsection

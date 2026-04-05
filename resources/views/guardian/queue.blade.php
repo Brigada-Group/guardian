@@ -3,7 +3,7 @@
 @section('page-title', 'Queue Jobs')
 
 @section('content')
-<div x-data="queuePage()" x-init="init()">
+<div x-data="queuePage()" x-init="init()" class="space-y-6">
     <!-- Filters -->
     <div class="gd-card">
         <div class="gd-card__body" style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
@@ -23,8 +23,7 @@
         <div class="gd-skeleton-grid"><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--card"></div><div class="gd-skeleton gd-skeleton--chart"></div></div>
     </div>
 
-    <div x-show="loaded" x-cloak>
-        <div class="gd-fade-in">
+    <div x-show="loaded" x-cloak class="gd-fade-in space-y-6">
             <!-- Metric cards -->
             <div class="gd-metrics">
                 <div class="gd-stat-card">
@@ -200,7 +199,6 @@
                     </template>
                 </div>
             </div>
-        </div>
     </template>
 
     <!-- Toast notification -->

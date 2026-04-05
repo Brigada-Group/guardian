@@ -142,13 +142,12 @@
             display: grid;
             grid-template-columns: repeat(6, minmax(0, 1fr));
             gap: 1.25rem;
-            margin-bottom: 1.75rem;
         }
         @media (max-width: 1280px) { .gd-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
         @media (max-width: 768px) { .gd-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
         @media (max-width: 640px) { .gd-metrics { grid-template-columns: minmax(0, 1fr); } }
 
-        .gd-grid { display: grid; gap: 1.5rem; margin-bottom: 1.5rem; }
+        .gd-grid { display: grid; gap: 1.5rem; }
         .gd-grid--2 { grid-template-columns: repeat(2, 1fr); }
         .gd-grid--3 { grid-template-columns: repeat(3, 1fr); }
         .gd-grid--4 { grid-template-columns: repeat(4, 1fr); }
