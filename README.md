@@ -1,8 +1,8 @@
 # Brigada Guardian
 
-Private Laravel monitoring package. Runs security audits, health checks, and real-time event monitoring. Reports everything to Discord.
+Private Laravel monitoring package. Runs security audits, health checks, and real-time event monitoring. Reports everything to Discord — with a built-in web dashboard.
 
-**Think of it as Nightwatch for Laravel** — but self-hosted and Discord-native.
+**Think of it as Nightwatch for Laravel** — but self-hosted, Discord-native, and with a full monitoring dashboard.
 
 ## Requirements
 
@@ -105,6 +105,136 @@ Every uncaught exception is sent to Discord in real-time with:
 - Exception class, message, and stack trace
 - URL, status code, user info, IP address
 - Deduplication (same exception only alerts once per 5 minutes)
+
+## Dashboard
+
+Guardian includes a built-in monitoring dashboard accessible at `/guardian` (configurable). It provides a real-time view of all monitoring data with interactive charts and tables.
+
+### Pages
+
+| Page | What It Shows |
+|------|---------------|
+| **Overview** | Key metrics (requests, error rate, response time, cache hit rate), response time and error charts, recent alerts |
+| **Requests** | Response time histogram, slowest endpoints, filterable request log |
+| **Queries** | Slow queries, N+1 detections, query volume trends |
+| **Outgoing HTTP** | External API performance by host, failure rates |
+| **Jobs & Scheduler** | Command exit codes, scheduled task status, failures |
+| **Mail** | Sent vs failed chart, delivery failures |
+| **Notifications** | Channel breakdown, failure rates by channel |
+| **Cache** | Hit rate over time, per-store breakdown, read/write ratios |
+| **Exceptions** | Grouped by class, occurrence counts, trend chart, expandable details |
+| **Health Checks** | Status grid for all 23 checks, Run Now buttons |
+
+### Stack
+
+- **Blade + Alpine.js 3 + Chart.js 4** via CDN — zero build step required
+- **30-second polling** with automatic pause when tab is hidden or idle
+- **Dark/light mode** toggle with localStorage persistence
+- Self-contained — no impact on your host app's middleware, routes, or assets
+
+### Enabling the Dashboard
+
+The dashboard is enabled by default. Configure it in `config/guardian.php`:
+
+```php
+'dashboard' => [
+    'enabled' => true,
+    'path' => 'guardian',           // URL prefix: /guardian
+    'allowed_ips' => [],            // Empty = no IP restriction
+    'poll_interval' => 30,          // Seconds between data refreshes
+    'per_page' => 50,               // Rows per table page
+],
+```
+
+### Access Control
+
+The dashboard requires **both** a Gate check and an optional IP whitelist.
+
+**1. Define the gate** in your `AuthServiceProvider` or `AppServiceProvider`:
+
+```php
+use Illuminate\Support\Facades\Gate;
+
+Gate::define('viewGuardianDashboard', function ($user) {
+    return $user->is_admin; // Your logic here
+});
+```
+
+**2. Optionally restrict by IP:**
+
+```php
+'dashboard' => [
+    'allowed_ips' => ['127.0.0.1', '10.0.0.0/24'],
+],
+```
+
+If `allowed_ips` is empty, only the gate check is enforced.
+
+### API Endpoints
+
+Each dashboard page has a corresponding JSON API endpoint at `/guardian/api/{section}`. These are rate-limited (60 requests/minute per IP) and return `Cache-Control: no-store` headers. The dashboard's own requests are excluded from Guardian's request monitoring.
+
+## Security
+
+Guardian includes several security features to protect sensitive data in monitoring logs and Discord alerts.
+
+### SQL Sanitization
+
+Sensitive values in SQL queries are redacted before storage:
+
+```php
+// Stored as: select * from users where email = '[REDACTED]' and id = ?
+'security' => [
+    'sanitize_sql' => true,     // Enabled by default
+],
+```
+
+### Stack Trace Sanitization
+
+Exception messages and stack traces sent to Discord are automatically cleaned:
+- Base paths stripped from file references
+- Values after `password=`, `token=`, `secret=`, `key=`, `authorization=` are redacted
+- Bearer tokens are redacted
+
+### Header Filtering
+
+Only safe headers are included in Discord exception alerts (whitelist approach):
+
+```php
+'security' => [
+    'safe_headers' => ['User-Agent', 'Referer', 'Accept', 'Content-Type'],
+],
+```
+
+Headers like `Authorization`, `Cookie`, `X-CSRF-Token`, and `X-API-Key` are never sent to Discord.
+
+### IP Anonymization (GDPR)
+
+Optionally anonymize IP addresses in request logs:
+
+```php
+'security' => [
+    'anonymize_ip' => false,    // Set to true to enable
+],
+```
+
+When enabled, the last octet of IPv4 addresses is zeroed (`192.168.1.42` becomes `192.168.1.0`), and the last 80 bits of IPv6 addresses are zeroed.
+
+### Mail Recipient Hashing
+
+Optionally hash email recipients before storage:
+
+```php
+'security' => [
+    'hash_mail_recipients' => false,    // Set to true to enable
+],
+```
+
+When enabled, email addresses are stored as SHA-256 hashes, allowing unique recipient counting without storing PII.
+
+### Discord Webhook Validation
+
+Guardian validates that the configured webhook URL points to a Discord domain (`discord.com` or `discordapp.com`). Non-Discord URLs trigger a warning log but are still allowed (for proxy setups).
 
 ## Commands
 
