@@ -4,6 +4,14 @@
 
 @section('content')
 <div x-data="logsPage()" x-init="init()" class="space-y-6">
+    <!-- Tab selector -->
+    <div class="gd-date-filter">
+        <button :class="activeTab === 'captured' ? 'active' : ''" @click="activeTab = 'captured'">Captured Logs</button>
+        <button :class="activeTab === 'files' ? 'active' : ''" @click="activeTab = 'files'; loadFiles()">Log Files</button>
+    </div>
+
+    <!-- ===== CAPTURED LOGS TAB ===== -->
+    <div x-show="activeTab === 'captured'" class="space-y-6">
     <!-- Filters -->
     <div class="gd-card">
         <div class="gd-card__body" style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
@@ -163,9 +171,104 @@
     </template>
 
     <!-- Toast notification -->
-    <div x-show="copyToast" x-transition class="gd-toast" style="position:fixed; bottom:20px; right:20px; background:#10b981; color:white; padding:10px 20px; border-radius:8px; font-size:13px; z-index:9999; box-shadow:0 4px 12px rgba(0,0,0,.2);">
-        Copied as Markdown!
+    <div x-show="copyToast" x-transition class="gd-toast">Copied as Markdown!</div>
+    </div><!-- end captured logs tab -->
+
+    <!-- ===== LOG FILES TAB ===== -->
+    <div x-show="activeTab === 'files'" class="space-y-6">
+        <!-- File selector -->
+        <div class="gd-card">
+            <div class="gd-card__body" style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                <select class="gd-filter-input" x-model="selectedFile" @change="loadFileContent()">
+                    <option value="">Select a log file...</option>
+                    <template x-for="f in logFiles" :key="f.name">
+                        <option :value="f.name" x-text="f.name + ' (' + f.size_human + ')'"></option>
+                    </template>
+                </select>
+                <button class="gd-btn gd-btn--sm" @click="loadFileContent()" :disabled="!selectedFile">Refresh</button>
+                <span style="font-size:12px; color:#64748b;" x-show="logFiles.length" x-text="logFiles.length + ' log files found'"></span>
+            </div>
+        </div>
+
+        <!-- File content -->
+        <div x-show="fileEntries.length > 0" class="gd-card">
+            <div class="gd-card__header">
+                <span x-text="selectedFile"></span>
+                <span style="font-size:12px; color:#64748b;" x-text="fileEntries.length + ' entries'"></span>
+            </div>
+            <div class="gd-card__body" style="padding:0;">
+                <div class="gd-table-wrapper" style="max-height:600px; overflow-y:auto;">
+                    <table class="gd-table">
+                        <thead>
+                            <tr>
+                                <th style="width:160px;">Time</th>
+                                <th style="width:90px;">Level</th>
+                                <th>Message</th>
+                                <th style="width:80px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="(entry, idx) in fileEntries" :key="idx">
+                                <tr>
+                                    <td style="white-space:nowrap; font-size:12px; color:#64748b;" x-text="entry.timestamp"></td>
+                                    <td>
+                                        <span class="gd-badge" :class="levelBadgeClass(entry.level)" x-text="entry.level"></span>
+                                    </td>
+                                    <td style="max-width:500px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px;" x-text="entry.message"></td>
+                                    <td>
+                                        <button class="gd-btn gd-btn--sm" @click="fileModalEntry = entry">View</button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div x-show="selectedFile && fileEntries.length === 0 && !loadingFile" class="gd-card">
+            <div class="gd-card__body">
+                <div class="gd-empty">
+                    <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <div class="gd-empty__text">Log file is empty</div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Log file entry modal -->
+    <template x-if="fileModalEntry">
+        <div style="position:fixed; inset:0; z-index:999; display:flex; align-items:center; justify-content:center; padding:16px;" @click.self="fileModalEntry = null">
+            <div style="position:absolute; inset:0; background:rgba(0,0,0,.5); backdrop-filter:blur(4px);"></div>
+            <div style="position:relative; width:100%; max-width:700px; max-height:90vh; overflow-y:auto; background:white; border-radius:12px; border:1px solid hsl(214.3 31.8% 91.4%); box-shadow:0 25px 50px -12px rgba(0,0,0,.25);">
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:20px 24px; border-bottom:1px solid hsl(214.3 31.8% 91.4%);">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span class="gd-badge" :class="levelBadgeClass(fileModalEntry.level)" x-text="fileModalEntry.level"></span>
+                        <span style="font-size:13px; color:#64748b;" x-text="fileModalEntry.timestamp"></span>
+                    </div>
+                    <button @click="fileModalEntry = null" style="padding:4px; border-radius:6px; color:#64748b; cursor:pointer; border:none; background:none;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div style="padding:24px; display:flex; flex-direction:column; gap:16px;">
+                    <div>
+                        <div style="font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px;">Message</div>
+                        <div style="font-size:13px; line-height:1.6; word-break:break-word;" x-text="fileModalEntry.message"></div>
+                    </div>
+                    <template x-if="fileModalEntry.context">
+                        <div>
+                            <div style="font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px;">Stack Trace / Context</div>
+                            <pre style="margin:0; padding:12px; border-radius:8px; background:#f8fafc; border:1px solid hsl(214.3 31.8% 91.4%); font-size:11px; font-family:monospace; white-space:pre-wrap; word-break:break-all; max-height:400px; overflow-y:auto;" x-text="fileModalEntry.context"></pre>
+                        </div>
+                    </template>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:8px; padding:16px 24px; border-top:1px solid hsl(214.3 31.8% 91.4%);">
+                    <button class="gd-btn gd-btn--sm" @click="copyFileEntry(fileModalEntry)">Copy as Markdown</button>
+                    <button class="gd-btn" @click="fileModalEntry = null">Close</button>
+                </div>
+            </div>
+        </div>
+    </template>
 </div>
 @endsection
 
@@ -183,6 +286,12 @@ function logsPage() {
         expandedId: null,
         expandedLog: null,
         copyToast: false,
+        activeTab: 'captured',
+        logFiles: [],
+        selectedFile: '',
+        fileEntries: [],
+        loadingFile: false,
+        fileModalEntry: null,
 
         async init() {
             await this.fetchData();
@@ -344,6 +453,44 @@ function logsPage() {
                     }
                 });
             }
+        },
+
+        async loadFiles() {
+            if (this.logFiles.length > 0) return;
+            try {
+                const res = await guardianFetch('{{ route("guardian.api.log-files") }}');
+                this.logFiles = res.data.files || [];
+                if (this.logFiles.length > 0 && !this.selectedFile) {
+                    this.selectedFile = this.logFiles[0].name;
+                    this.loadFileContent();
+                }
+            } catch (e) { console.error('Failed to load log files', e); }
+        },
+
+        async loadFileContent() {
+            if (!this.selectedFile) return;
+            this.loadingFile = true;
+            this.fileEntries = [];
+            try {
+                const res = await guardianFetch('{{ route("guardian.api.log-file-content") }}', { file: this.selectedFile, lines: 500 });
+                this.fileEntries = res.data.entries || [];
+            } catch (e) { console.error('Failed to load file content', e); }
+            this.loadingFile = false;
+        },
+
+        copyFileEntry(entry) {
+            let md = `## Log File Entry\n\n`;
+            md += `- **Level:** ${entry.level}\n`;
+            md += `- **Time:** ${entry.timestamp}\n`;
+            md += `- **Message:** ${entry.message}\n`;
+            if (entry.context) {
+                md += `\n### Stack Trace / Context\n\`\`\`\n${entry.context}\n\`\`\`\n`;
+            }
+            md += `\n---\n*Please analyze this error and suggest a fix.*\n`;
+            navigator.clipboard.writeText(md).then(() => {
+                this.copyToast = true;
+                setTimeout(() => { this.copyToast = false; }, 2000);
+            });
         },
     };
 }

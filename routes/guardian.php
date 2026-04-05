@@ -29,6 +29,8 @@ Route::prefix('api')->middleware('throttle:guardian-api')->group(function () {
     Route::get('/exceptions', [DashboardController::class, 'apiExceptions'])->name('guardian.api.exceptions');
     Route::get('/queue', [DashboardController::class, 'apiQueue'])->name('guardian.api.queue');
     Route::get('/logs', [DashboardController::class, 'apiLogs'])->name('guardian.api.logs');
+    Route::get('/log-files', [DashboardController::class, 'apiLogFiles'])->name('guardian.api.log-files');
+    Route::get('/log-file-content', [DashboardController::class, 'apiLogFileContent'])->name('guardian.api.log-file-content');
     Route::get('/alerts', [DashboardController::class, 'apiAlerts'])->name('guardian.api.alerts');
     Route::get('/health', [DashboardController::class, 'apiHealth'])->name('guardian.api.health');
     Route::post('/health/run/{check}', [DashboardController::class, 'apiHealthRun'])->name('guardian.api.health.run');

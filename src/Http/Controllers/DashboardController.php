@@ -629,6 +629,137 @@ class DashboardController extends Controller
         }
     }
 
+    public function apiLogFiles(): JsonResponse
+    {
+        try {
+            $logPath = storage_path('logs');
+
+            if (! is_dir($logPath)) {
+                return $this->apiResponse(['files' => []]);
+            }
+
+            $files = collect(scandir($logPath))
+                ->filter(fn ($f) => str_ends_with($f, '.log'))
+                ->map(function ($f) use ($logPath) {
+                    $path = $logPath . '/' . $f;
+
+                    return [
+                        'name' => $f,
+                        'size' => filesize($path),
+                        'size_human' => $this->humanFileSize(filesize($path)),
+                        'modified' => date('Y-m-d H:i:s', filemtime($path)),
+                    ];
+                })
+                ->sortByDesc('modified')
+                ->values()
+                ->all();
+
+            return $this->apiResponse(['files' => $files]);
+        } catch (\Throwable $e) {
+            return $this->apiError('Failed to list log files.');
+        }
+    }
+
+    public function apiLogFileContent(Request $request): JsonResponse
+    {
+        try {
+            $filename = $request->query('file', 'laravel.log');
+
+            // Security: only allow .log files, no path traversal
+            if (! preg_match('/^[\w\-\.]+\.log$/', $filename)) {
+                return response()->json(['error' => 'Invalid filename.'], 400)
+                    ->header('Cache-Control', 'no-store');
+            }
+
+            $path = storage_path('logs/' . $filename);
+
+            if (! file_exists($path)) {
+                return $this->apiResponse(['lines' => [], 'total_lines' => 0]);
+            }
+
+            // Read last N lines efficiently
+            $lines = (int) $request->query('lines', 200);
+            $lines = min($lines, 1000);
+
+            $content = $this->tailFile($path, $lines);
+            $entries = $this->parseLogEntries($content);
+
+            return $this->apiResponse([
+                'file' => $filename,
+                'entries' => $entries,
+                'total_size' => filesize($path),
+            ]);
+        } catch (\Throwable $e) {
+            return $this->apiError('Failed to read log file.');
+        }
+    }
+
+    private function tailFile(string $path, int $lines): string
+    {
+        $file = new \SplFileObject($path, 'r');
+        $file->seek(PHP_INT_MAX);
+        $totalLines = $file->key();
+
+        $start = max(0, $totalLines - $lines);
+        $file->seek($start);
+
+        $content = '';
+        while (! $file->eof()) {
+            $content .= $file->fgets();
+        }
+
+        return $content;
+    }
+
+    private function parseLogEntries(string $content): array
+    {
+        $entries = [];
+        $current = null;
+
+        foreach (explode("\n", $content) as $line) {
+            // Match Laravel log format: [YYYY-MM-DD HH:MM:SS] environment.LEVEL: message
+            if (preg_match('/^\[(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})\]\s+\w+\.(emergency|alert|critical|error|warning|notice|info|debug):\s*(.*)/i', $line, $m)) {
+                if ($current) {
+                    $entries[] = $current;
+                }
+                $current = [
+                    'timestamp' => $m[1],
+                    'level' => strtolower($m[2]),
+                    'message' => $m[3],
+                    'context' => '',
+                ];
+            } elseif ($current) {
+                $current['context'] .= ($current['context'] ? "\n" : '') . $line;
+            }
+        }
+
+        if ($current) {
+            $entries[] = $current;
+        }
+
+        // Return newest first, trim context
+        return array_map(function ($e) {
+            $e['context'] = trim($e['context']);
+            if (strlen($e['context']) > 5000) {
+                $e['context'] = substr($e['context'], 0, 5000) . "\n... [truncated]";
+            }
+
+            return $e;
+        }, array_reverse($entries));
+    }
+
+    private function humanFileSize(int $bytes): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB'];
+        $i = 0;
+        while ($bytes >= 1024 && $i < count($units) - 1) {
+            $bytes /= 1024;
+            $i++;
+        }
+
+        return round($bytes, 1) . ' ' . $units[$i];
+    }
+
     public function apiHealth(): JsonResponse
     {
         try {
