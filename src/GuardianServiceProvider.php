@@ -38,6 +38,7 @@ use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Notifications\Events\NotificationFailed;
 use Illuminate\Notifications\Events\NotificationSent;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
 class GuardianServiceProvider extends ServiceProvider
@@ -91,6 +92,11 @@ class GuardianServiceProvider extends ServiceProvider
         $this->app->singleton(ExceptionNotifier::class);
 
         $this->app->singleton(CacheListener::class);
+
+        $this->app->resolving('router', function ($router) {
+            $router->aliasMiddleware('guardian.gate', \Brigada\Guardian\Http\Middleware\GuardianGate::class);
+            $router->aliasMiddleware('guardian.ip-filter', \Brigada\Guardian\Http\Middleware\GuardianIpFilter::class);
+        });
     }
 
     public function boot(): void
@@ -100,6 +106,12 @@ class GuardianServiceProvider extends ServiceProvider
         ], 'guardian-config');
 
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'guardian');
+
+        if (config('guardian.dashboard.enabled', true)) {
+            $this->registerDashboardRoutes();
+        }
 
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -187,6 +199,13 @@ class GuardianServiceProvider extends ServiceProvider
             Event::listen(ScheduledTaskFailed::class, [ScheduledTaskListener::class, 'handleFailed']);
             Event::listen(ScheduledTaskSkipped::class, [ScheduledTaskListener::class, 'handleSkipped']);
         }
+    }
+
+    private function registerDashboardRoutes(): void
+    {
+        Route::prefix(config('guardian.dashboard.path', 'guardian'))
+            ->middleware(['web', 'guardian.gate', 'guardian.ip-filter'])
+            ->group(__DIR__ . '/../routes/guardian.php');
     }
 
     private function parseWeeklyDay(string $day): int

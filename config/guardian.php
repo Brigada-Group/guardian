@@ -132,4 +132,18 @@ return [
         'hash_mail_recipients' => false,
         'safe_headers' => ['User-Agent', 'Referer', 'Accept', 'Content-Type'],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard
+    |--------------------------------------------------------------------------
+    */
+
+    'dashboard' => [
+        'enabled' => true,
+        'path' => 'guardian',
+        'allowed_ips' => [],
+        'poll_interval' => 30,
+        'per_page' => 50,
+    ],
 ];
