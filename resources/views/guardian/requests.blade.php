@@ -26,7 +26,7 @@
         <div class="gd-loading"><div class="gd-spinner"></div> Loading request data...</div>
     </template>
 
-    <template x-if="data">
+    <div x-show="data" x-cloak>
         <div>
             <!-- Histogram -->
             <div class="gd-grid gd-grid--2">
@@ -102,7 +102,7 @@
                 </div>
             </div>
         </div>
-    </template>
+    </div>
 </div>
 @endsection
 

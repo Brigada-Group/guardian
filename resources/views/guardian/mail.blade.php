@@ -20,7 +20,7 @@
         <div class="gd-loading"><div class="gd-spinner"></div> Loading mail data...</div>
     </template>
 
-    <template x-if="data">
+    <div x-show="data" x-cloak>
         <div>
             <!-- Daily chart -->
             <div class="gd-card">
@@ -72,7 +72,7 @@
                 </div>
             </div>
         </div>
-    </template>
+    </div>
 </div>
 @endsection
 

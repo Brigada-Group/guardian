@@ -18,7 +18,7 @@
         <div class="gd-loading"><div class="gd-spinner"></div> Loading outgoing HTTP data...</div>
     </template>
 
-    <template x-if="data">
+    <div x-show="data" x-cloak>
         <div>
             <!-- By host chart + table -->
             <div class="gd-grid gd-grid--2">
@@ -96,7 +96,7 @@
                 </div>
             </div>
         </div>
-    </template>
+    </div>
 </div>
 @endsection
 

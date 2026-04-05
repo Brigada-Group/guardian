@@ -26,7 +26,7 @@
         <div class="gd-loading"><div class="gd-spinner"></div> Loading notification data...</div>
     </template>
 
-    <template x-if="data">
+    <div x-show="data" x-cloak>
         <div>
             <!-- Channel breakdown -->
             <div class="gd-grid gd-grid--2">
@@ -100,7 +100,7 @@
                 </div>
             </div>
         </div>
-    </template>
+    </div>
 </div>
 @endsection
 

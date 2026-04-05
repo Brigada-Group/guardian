@@ -15,7 +15,7 @@
         <div class="gd-loading"><div class="gd-spinner"></div> Loading exception data...</div>
     </template>
 
-    <template x-if="data">
+    <div x-show="data" x-cloak>
         <div>
             <!-- Trend chart -->
             <div class="gd-card">
@@ -82,7 +82,7 @@
                 </div>
             </div>
         </div>
-    </template>
+    </div>
 </div>
 @endsection
 

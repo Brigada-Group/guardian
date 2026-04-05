@@ -8,7 +8,7 @@
         <div class="gd-loading"><div class="gd-spinner"></div> Loading cache data...</div>
     </template>
 
-    <template x-if="data">
+    <div x-show="data" x-cloak>
         <div>
             <!-- Top metrics -->
             <div class="gd-metrics">
@@ -90,7 +90,7 @@
                 </div>
             </div>
         </div>
-    </template>
+    </div>
 </div>
 @endsection
 

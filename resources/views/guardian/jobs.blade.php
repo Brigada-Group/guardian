@@ -14,7 +14,7 @@
         <div class="gd-loading"><div class="gd-spinner"></div> Loading jobs data...</div>
     </template>
 
-    <template x-if="data">
+    <div x-show="data" x-cloak>
         <div>
             <!-- Charts -->
             <div class="gd-card">
@@ -110,7 +110,7 @@
                 </div>
             </template>
         </div>
-    </template>
+    </div>
 </div>
 @endsection
 
