@@ -101,6 +101,17 @@ return [
             'slow_threshold_ms' => 300000,      // 5 minutes
             'dedup_minutes' => 5,
         ],
+
+        'jobs' => [
+            'enabled' => true,
+            'slow_threshold_ms' => 30000,       // 30 seconds
+            'dedup_minutes' => 5,
+        ],
+
+        'logs' => [
+            'enabled' => true,
+            'dedup_minutes' => 5,
+        ],
     ],
 
     /*
@@ -118,6 +129,8 @@ return [
         'notification_logs_days' => 30,
         'cache_logs_days' => 7,
         'command_logs_days' => 30,
+        'job_logs_days' => 30,
+        'log_entries_days' => 7,
         'scheduled_task_logs_days' => 30,
     ],
 

@@ -12,6 +12,8 @@ use Brigada\Guardian\Exceptions\ExceptionNotifier;
 use Brigada\Guardian\Http\Middleware\RequestMonitor;
 use Brigada\Guardian\Listeners\CacheListener;
 use Brigada\Guardian\Listeners\CommandListener;
+use Brigada\Guardian\Listeners\JobListener;
+use Brigada\Guardian\Listeners\LogListener;
 use Brigada\Guardian\Listeners\MailListener;
 use Brigada\Guardian\Listeners\NotificationListener;
 use Brigada\Guardian\Listeners\OutgoingHttpListener;
@@ -32,6 +34,10 @@ use Illuminate\Console\Events\ScheduledTaskStarting;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Log\Events\MessageLogged;
+use Illuminate\Queue\Events\JobFailed;
+use Illuminate\Queue\Events\JobProcessed;
+use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Http\Client\Events\ConnectionFailed;
 use Illuminate\Http\Client\Events\ResponseReceived;
 use Illuminate\Mail\Events\MessageSent;
@@ -199,6 +205,18 @@ class GuardianServiceProvider extends ServiceProvider
             Event::listen(ScheduledTaskFinished::class, [ScheduledTaskListener::class, 'handleFinished']);
             Event::listen(ScheduledTaskFailed::class, [ScheduledTaskListener::class, 'handleFailed']);
             Event::listen(ScheduledTaskSkipped::class, [ScheduledTaskListener::class, 'handleSkipped']);
+        }
+
+        // Job/Queue Monitoring
+        if (config('guardian.monitoring.jobs.enabled', true)) {
+            Event::listen(JobProcessing::class, [JobListener::class, 'handleProcessing']);
+            Event::listen(JobProcessed::class, [JobListener::class, 'handleProcessed']);
+            Event::listen(JobFailed::class, [JobListener::class, 'handleFailed']);
+        }
+
+        // Log Monitoring
+        if (config('guardian.monitoring.logs.enabled', true)) {
+            Event::listen(MessageLogged::class, [LogListener::class, 'handle']);
         }
     }
 

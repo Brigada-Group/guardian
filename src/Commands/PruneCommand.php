@@ -5,6 +5,8 @@ namespace Brigada\Guardian\Commands;
 use Brigada\Guardian\Models\CacheLog;
 use Brigada\Guardian\Models\CommandLog;
 use Brigada\Guardian\Models\GuardianResult;
+use Brigada\Guardian\Models\JobLog;
+use Brigada\Guardian\Models\LogEntry;
 use Brigada\Guardian\Models\MailLog;
 use Brigada\Guardian\Models\NotificationLog;
 use Brigada\Guardian\Models\OutgoingHttpLog;
@@ -41,6 +43,8 @@ class PruneCommand extends Command
             ['model' => CacheLog::class, 'config' => 'cache_logs_days', 'label' => 'Cache logs'],
             ['model' => CommandLog::class, 'config' => 'command_logs_days', 'label' => 'Command logs'],
             ['model' => ScheduledTaskLog::class, 'config' => 'scheduled_task_logs_days', 'label' => 'Scheduled task logs'],
+            ['model' => JobLog::class, 'config' => 'job_logs_days', 'label' => 'Job logs'],
+            ['model' => LogEntry::class, 'config' => 'log_entries_days', 'label' => 'Log entries'],
         ];
 
         $totalDeleted = 0;

@@ -5,6 +5,8 @@ namespace Brigada\Guardian\Http\Controllers;
 use Brigada\Guardian\Models\CacheLog;
 use Brigada\Guardian\Models\CommandLog;
 use Brigada\Guardian\Models\GuardianResult;
+use Brigada\Guardian\Models\JobLog;
+use Brigada\Guardian\Models\LogEntry;
 use Brigada\Guardian\Models\MailLog;
 use Brigada\Guardian\Models\NotificationLog;
 use Brigada\Guardian\Models\OutgoingHttpLog;
@@ -72,6 +74,20 @@ class DashboardController extends Controller
     public function cache()
     {
         return view('guardian::guardian.cache', [
+            'pollInterval' => config('guardian.dashboard.poll_interval', 30),
+        ]);
+    }
+
+    public function queue()
+    {
+        return view('guardian::guardian.queue', [
+            'pollInterval' => config('guardian.dashboard.poll_interval', 30),
+        ]);
+    }
+
+    public function logs()
+    {
+        return view('guardian::guardian.logs', [
             'pollInterval' => config('guardian.dashboard.poll_interval', 30),
         ]);
     }
@@ -485,6 +501,131 @@ class DashboardController extends Controller
             ]);
         } catch (\Throwable $e) {
             return $this->apiError('Failed to load alerts data.');
+        }
+    }
+
+    public function apiQueue(Request $request): JsonResponse
+    {
+        try {
+            $perPage = config('guardian.dashboard.per_page', 50);
+            $query = JobLog::query();
+
+            if ($status = $request->query('status')) {
+                $query->where('status', $status);
+            }
+            if ($queue = $request->query('queue')) {
+                $query->where('queue', $queue);
+            }
+            if ($jobClass = $request->query('job_class')) {
+                $query->where('job_class', 'like', '%' . $jobClass . '%');
+            }
+            if ($dateFrom = $request->query('date_from')) {
+                $query->where('created_at', '>=', $dateFrom);
+            }
+            if ($dateTo = $request->query('date_to')) {
+                $query->where('created_at', '<=', $dateTo);
+            }
+
+            $logs = (clone $query)->latest('created_at')->paginate($perPage);
+
+            $since24h = now()->subHours(24);
+            $summary = [
+                'total' => JobLog::where('created_at', '>=', $since24h)->count(),
+                'completed' => JobLog::where('created_at', '>=', $since24h)->where('status', 'completed')->count(),
+                'failed' => JobLog::where('created_at', '>=', $since24h)->where('status', 'failed')->count(),
+                'avg_duration' => round((float) (JobLog::where('created_at', '>=', $since24h)->where('status', 'completed')->avg('duration_ms') ?? 0), 2),
+            ];
+
+            // Top failed jobs
+            $topFailed = JobLog::where('status', 'failed')
+                ->where('created_at', '>=', $since24h)
+                ->selectRaw('job_class, COUNT(*) as fail_count')
+                ->groupBy('job_class')
+                ->orderByDesc('fail_count')
+                ->take(10)
+                ->get();
+
+            // Hourly throughput
+            $h = $this->hourGroupExpr();
+            $throughput = JobLog::where('created_at', '>=', $since24h)
+                ->selectRaw("{$h['select']}, status, COUNT(*) as count")
+                ->groupByRaw("{$h['group']}, status")
+                ->orderBy('hour')
+                ->take(48)
+                ->get();
+
+            $thresholds = [
+                'slow_job_ms' => config('guardian.monitoring.jobs.slow_threshold_ms', 30000),
+            ];
+
+            return $this->apiResponse([
+                'logs' => $logs,
+                'summary' => $summary,
+                'top_failed' => $topFailed,
+                'throughput' => $throughput,
+                'thresholds' => $thresholds,
+            ]);
+        } catch (\Throwable $e) {
+            return $this->apiError('Failed to load queue data.');
+        }
+    }
+
+    public function apiLogs(Request $request): JsonResponse
+    {
+        try {
+            $perPage = config('guardian.dashboard.per_page', 50);
+            $query = LogEntry::query();
+
+            if ($level = $request->query('level')) {
+                $query->where('level', $level);
+            }
+            if ($channel = $request->query('channel')) {
+                $query->where('channel', $channel);
+            }
+            if ($search = $request->query('search')) {
+                $query->where('message', 'like', '%' . $search . '%');
+            }
+            if ($dateFrom = $request->query('date_from')) {
+                $query->where('created_at', '>=', $dateFrom);
+            }
+            if ($dateTo = $request->query('date_to')) {
+                $query->where('created_at', '<=', $dateTo);
+            }
+
+            $logs = (clone $query)->latest('created_at')->paginate($perPage);
+
+            $since24h = now()->subHours(24);
+            $summary = [
+                'total' => LogEntry::where('created_at', '>=', $since24h)->count(),
+                'emergency' => LogEntry::where('created_at', '>=', $since24h)->where('level', 'emergency')->count(),
+                'critical' => LogEntry::where('created_at', '>=', $since24h)->where('level', 'critical')->count(),
+                'error' => LogEntry::where('created_at', '>=', $since24h)->where('level', 'error')->count(),
+                'warning' => LogEntry::where('created_at', '>=', $since24h)->where('level', 'warning')->count(),
+            ];
+
+            // Level distribution
+            $byLevel = LogEntry::where('created_at', '>=', $since24h)
+                ->selectRaw('level, COUNT(*) as count')
+                ->groupBy('level')
+                ->get();
+
+            // Hourly trend
+            $h = $this->hourGroupExpr();
+            $trend = LogEntry::where('created_at', '>=', $since24h)
+                ->selectRaw("{$h['select']}, level, COUNT(*) as count")
+                ->groupByRaw("{$h['group']}, level")
+                ->orderBy('hour')
+                ->take(120)
+                ->get();
+
+            return $this->apiResponse([
+                'logs' => $logs,
+                'summary' => $summary,
+                'by_level' => $byLevel,
+                'trend' => $trend,
+            ]);
+        } catch (\Throwable $e) {
+            return $this->apiError('Failed to load log data.');
         }
     }
 

@@ -325,6 +325,90 @@
         .gd-health-card__name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
         .gd-health-card__message { font-size: 12px; color: var(--gd-text-secondary); margin-bottom: 6px; }
         .gd-health-card__meta { font-size: 11px; color: var(--gd-text-secondary); display: flex; gap: 12px; }
+
+        /* Loading skeleton pulse */
+        .gd-skeleton { background: linear-gradient(90deg, var(--gd-surface) 25%, var(--gd-border) 50%, var(--gd-surface) 75%); background-size: 200% 100%; animation: gd-shimmer 1.5s infinite; border-radius: 4px; }
+        @keyframes gd-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* Enhanced empty state */
+        .gd-empty svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.4; }
+
+        /* Better table enhancements */
+        .gd-table th { position: sticky; top: 0; background: var(--gd-surface); z-index: 1; }
+        .gd-table tbody tr { transition: background 0.15s; }
+
+        /* Better badges */
+        .gd-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Metric card improvements */
+        .gd-metric-card { transition: transform 0.15s, box-shadow 0.15s; }
+        .gd-metric-card:hover { transform: translateY(-2px); box-shadow: var(--gd-shadow-lg); }
+
+        /* Transition for data */
+        .gd-fade-in { animation: gd-fade 0.3s ease; }
+        @keyframes gd-fade { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Toast slide-in */
+        .gd-toast { animation: gd-slide-in 0.3s ease; }
+        @keyframes gd-slide-in { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* Log level colors */
+        .gd-badge--emergency, .gd-badge--alert, .gd-badge--critical { background: #dc2626; color: white; }
+        .gd-badge--error { background: #ea580c; color: white; }
+        .gd-badge--warning-solid { background: #f59e0b; color: white; }
+        .gd-badge--completed { background: rgba(16,185,129,.1); color: #059669; }
+        .gd-badge--processing { background: rgba(59,130,246,.1); color: #3b82f6; }
+        .gd-dark .gd-badge--emergency, .gd-dark .gd-badge--alert, .gd-dark .gd-badge--critical { background: #dc2626; color: white; }
+        .gd-dark .gd-badge--error { background: #ea580c; color: white; }
+        .gd-dark .gd-badge--completed { background: rgba(16,185,129,.15); color: #34d399; }
+        .gd-dark .gd-badge--processing { background: rgba(59,130,246,.15); color: #60a5fa; }
+
+        /* Copy button styling */
+        .gd-btn--copy { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; }
+
+        /* Expandable section transition */
+        .gd-expandable-section { overflow: hidden; transition: max-height 0.3s ease; }
+
+        /* Environment badge in header */
+        .gd-env-badge { font-size: 10px; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; display: inline-block; }
+        .gd-env-badge--production { background: #dc2626; color: white; }
+        .gd-env-badge--staging { background: #f59e0b; color: white; }
+        .gd-env-badge--local { background: #3b82f6; color: white; }
+        .gd-env-badge--testing { background: #8b5cf6; color: white; }
+
+        /* Active sidebar link enhancement */
+        .gd-sidebar__link.active { background: rgba(56,189,248,.1); color: var(--gd-sidebar-active); border-left: 3px solid var(--gd-sidebar-active); padding-left: 11px; }
+
+        /* Scrollbar styling */
+        .gd-dark ::-webkit-scrollbar { width: 6px; height: 6px; }
+        .gd-dark ::-webkit-scrollbar-track { background: var(--gd-surface); }
+        .gd-dark ::-webkit-scrollbar-thumb { background: var(--gd-border); border-radius: 3px; }
+        .gd-dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        /* Responsive metric cards on mobile */
+        @media (max-width: 768px) {
+            .gd-metrics { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .gd-content { padding: 16px; }
+        }
+        @media (max-width: 480px) {
+            .gd-metrics { grid-template-columns: 1fr; }
+        }
+
+        /* Filter inputs */
+        .gd-filter-input {
+            padding: 6px 10px; border-radius: 6px; font-size: 12px;
+            border: 1px solid var(--gd-border); background: var(--gd-surface);
+            color: var(--gd-text); transition: border-color 0.15s;
+        }
+        .gd-filter-input:focus { outline: none; border-color: var(--gd-accent); }
+
+        /* Context JSON display */
+        .gd-context-json {
+            padding: 12px; border-radius: 6px; background: var(--gd-bg);
+            font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px;
+            white-space: pre-wrap; word-break: break-all; max-height: 300px;
+            overflow-y: auto; border: 1px solid var(--gd-border);
+        }
     </style>
 </head>
 <body>
@@ -377,6 +461,14 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
                 Cache
             </a>
+            <a href="{{ route('guardian.queue') }}" class="gd-sidebar__link {{ request()->routeIs('guardian.queue') ? 'active' : '' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+                Queue Jobs
+            </a>
+            <a href="{{ route('guardian.logs') }}" class="gd-sidebar__link {{ request()->routeIs('guardian.logs') ? 'active' : '' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                Logs
+            </a>
             <a href="{{ route('guardian.exceptions') }}" class="gd-sidebar__link {{ request()->routeIs('guardian.exceptions') ? 'active' : '' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 Exceptions
@@ -395,7 +487,11 @@
     <!-- Main -->
     <div class="gd-main">
         <header class="gd-topbar">
-            <div class="gd-topbar__title">@yield('page-title', 'Dashboard')</div>
+            <div class="gd-topbar__title">
+                @yield('page-title', 'Dashboard')
+                @php $gdEnv = config('guardian.environment', config('app.env', 'local')); @endphp
+                <span class="gd-env-badge gd-env-badge--{{ $gdEnv }}">{{ $gdEnv }}</span>
+            </div>
             <div class="gd-topbar__actions">
                 <div class="gd-poll-indicator" x-show="polling">
                     <div class="gd-poll-dot" :class="{ 'paused': pollPaused }"></div>
