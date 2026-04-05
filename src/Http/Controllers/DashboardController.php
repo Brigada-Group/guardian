@@ -638,18 +638,28 @@ class DashboardController extends Controller
                 return $this->apiResponse(['files' => []]);
             }
 
-            $files = collect(scandir($logPath))
-                ->filter(fn ($f) => str_ends_with($f, '.log'))
-                ->map(function ($f) use ($logPath) {
-                    $path = $logPath . '/' . $f;
+            // Recursively find all .log files (supports channel subdirectories)
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($logPath, \FilesystemIterator::SKIP_DOTS),
+                \RecursiveIteratorIterator::LEAVES_ONLY
+            );
 
-                    return [
-                        'name' => $f,
-                        'size' => filesize($path),
-                        'size_human' => $this->humanFileSize(filesize($path)),
-                        'modified' => date('Y-m-d H:i:s', filemtime($path)),
-                    ];
-                })
+            $files = collect();
+            foreach ($iterator as $file) {
+                if ($file->isFile() && str_ends_with($file->getFilename(), '.log')) {
+                    // Store relative path from logs/ directory
+                    $relativePath = str_replace($logPath . '/', '', $file->getPathname());
+
+                    $files->push([
+                        'name' => $relativePath,
+                        'size' => $file->getSize(),
+                        'size_human' => $this->humanFileSize($file->getSize()),
+                        'modified' => date('Y-m-d H:i:s', $file->getMTime()),
+                    ]);
+                }
+            }
+
+            $files = $files
                 ->sortByDesc('modified')
                 ->values()
                 ->all();
@@ -665,9 +675,16 @@ class DashboardController extends Controller
         try {
             $filename = $request->query('file', 'laravel.log');
 
-            // Security: only allow .log files, no path traversal
-            if (! preg_match('/^[\w\-\.]+\.log$/', $filename)) {
+            // Security: only allow .log files in subdirectories, no path traversal
+            if (! preg_match('/^[\w\-\.\/]+\.log$/', $filename) || str_contains($filename, '..')) {
                 return response()->json(['error' => 'Invalid filename.'], 400)
+                    ->header('Cache-Control', 'no-store');
+            }
+
+            // Ensure resolved path stays within storage/logs/
+            $resolved = realpath(storage_path('logs/' . $filename));
+            if (! $resolved || ! str_starts_with($resolved, realpath(storage_path('logs')))) {
+                return response()->json(['error' => 'Invalid file path.'], 400)
                     ->header('Cache-Control', 'no-store');
             }
 
