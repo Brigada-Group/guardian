@@ -5,6 +5,8 @@ namespace Brigada\Guardian\Listeners;
 use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
 use Brigada\Guardian\Models\JobLog;
+use Brigada\Guardian\Transport\NightwatchClient;
+use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobProcessing;
@@ -27,7 +29,7 @@ class JobListener
         $jobClass = $this->resolveJobClass($event->job);
 
         try {
-            JobLog::create([
+            $data = [
                 'job_class' => $jobClass,
                 'queue' => $event->job->getQueue(),
                 'connection' => $event->connectionName,
@@ -35,7 +37,13 @@ class JobListener
                 'duration_ms' => $durationMs,
                 'attempt' => $event->job->attempts(),
                 'created_at' => now(),
-            ]);
+            ];
+            JobLog::create($data);
+            if (config('guardian.hub.async', true)) {
+                SendToNightwatchClient::dispatch('jobs', $data);
+            } else {
+                app(NightwatchClient::class)->send('jobs', $data);
+            }
         } catch (\Throwable) {
             // Don't break the app
         }
@@ -59,7 +67,7 @@ class JobListener
         $errorMessage = $event->exception?->getMessage() ?? 'Unknown error';
 
         try {
-            JobLog::create([
+            $data = [
                 'job_class' => $jobClass,
                 'queue' => $event->job->getQueue(),
                 'connection' => $event->connectionName,
@@ -73,7 +81,15 @@ class JobListener
                     'line' => $event->exception?->getLine(),
                 ],
                 'created_at' => now(),
-            ]);
+            ];
+
+            JobLog::create($data);
+
+            if (config('guardian.hub.async', true)) {
+                SendToNightwatchClient::dispatch('jobs', $data);
+            } else {
+                app(NightwatchClient::class)->send('jobs', $data);
+            }
         } catch (\Throwable) {
             // Don't break the app
         }

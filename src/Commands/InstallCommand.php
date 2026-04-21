@@ -46,6 +46,12 @@ class InstallCommand extends Command
         $this->line('  GUARDIAN_PROJECT_NAME=' . config('app.name'));
         $this->line('  GUARDIAN_ENVIRONMENT=' . config('app.env'));
 
+        $this->newLine();
+        $this->line('Nightwatch Hub (centralized dashboard):');
+        $this->line('  GUARDIAN_HUB_URL=https://your-hub-domain.com');
+        $this->line('  GUARDIAN_HUB_PROJECT_ID=your-project-uuid');
+        $this->line('  GUARDIAN_HUB_API_TOKEN=your-api-token');
+
         return 0;
     }
 }

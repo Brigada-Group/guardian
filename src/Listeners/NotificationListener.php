@@ -5,6 +5,8 @@ namespace Brigada\Guardian\Listeners;
 use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
 use Brigada\Guardian\Models\NotificationLog;
+use Brigada\Guardian\Transport\NightwatchClient;
+use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Notifications\Events\NotificationFailed;
 use Illuminate\Notifications\Events\NotificationSent;
 
@@ -15,14 +17,22 @@ class NotificationListener
     public function handleSent(NotificationSent $event): void
     {
         try {
-            NotificationLog::create([
+            $data = [
                 'notification_class' => get_class($event->notification),
                 'channel' => $event->channel,
                 'notifiable_type' => get_class($event->notifiable),
                 'notifiable_id' => $event->notifiable->getKey() ?? null,
                 'status' => 'sent',
                 'created_at' => now(),
-            ]);
+            ];
+
+            NotificationLog::create($data);
+
+            if (config('guardian.hub.async', true)) {
+                SendToNightwatchClient::dispatch('notifications', $data);
+            } else {
+                app(NightwatchClient::class)->send('notifications', $data);
+            }
         } catch (\Throwable) {
             // Don't break the app
         }
@@ -38,7 +48,7 @@ class NotificationListener
         }
 
         try {
-            NotificationLog::create([
+            $data = [
                 'notification_class' => get_class($event->notification),
                 'channel' => $event->channel,
                 'notifiable_type' => get_class($event->notifiable),
@@ -46,7 +56,15 @@ class NotificationListener
                 'status' => 'failed',
                 'error_message' => mb_substr($errorMessage, 0, 1000),
                 'created_at' => now(),
-            ]);
+            ];
+
+            NotificationLog::create($data);
+
+            if (config('guardian.hub.async', true)) {
+                SendToNightwatchClient::dispatch('notifications', $data);
+            } else {
+                app(NightwatchClient::class)->send('notifications', $data);
+            }
         } catch (\Throwable) {
             // Don't break the app
         }

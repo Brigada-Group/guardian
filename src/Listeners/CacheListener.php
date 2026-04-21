@@ -5,6 +5,8 @@ namespace Brigada\Guardian\Listeners;
 use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
 use Brigada\Guardian\Models\CacheLog;
+use Brigada\Guardian\Transport\NightwatchClient;
+use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Cache\Events\CacheHit;
 use Illuminate\Cache\Events\CacheMissed;
 use Illuminate\Cache\Events\KeyForgotten;
@@ -64,7 +66,7 @@ class CacheListener
             $hitRate = $total > 0 ? round(($counts['hits'] / $total) * 100, 2) : null;
 
             try {
-                CacheLog::create([
+                $data = [
                     'store' => $store,
                     'hits' => $counts['hits'],
                     'misses' => $counts['misses'],
@@ -73,7 +75,15 @@ class CacheListener
                     'hit_rate' => $hitRate,
                     'period_start' => now()->startOfMinute(),
                     'created_at' => now(),
-                ]);
+                ];
+
+                CacheLog::create($data);
+
+                if (config('guardian.hub.async', true)) {
+                    SendToNightwatchClient::dispatch('cache', $data);
+                } else {
+                    app(NightwatchClient::class)->send('cache', $data);
+                }
             } catch (\Throwable) {
                 // Don't break the app
             }

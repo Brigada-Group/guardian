@@ -147,17 +147,29 @@ return [
         'safe_headers' => ['User-Agent', 'Referer', 'Accept', 'Content-Type'],
     ],
 
+
     /*
     |--------------------------------------------------------------------------
-    | Dashboard
+    | Nightwatch
     |--------------------------------------------------------------------------
+    |
+    | Connect this project to the Nightwatch dashboard.
+    | Create a project on your Hub instance to get a project ID and API token.
+    | When configured, all monitoring data is forwarded to the Hub in real-time.
+    |
+    | Set async to true (recommended) to send data via queued jobs so
+    | Hub communication never slows down your application.
+    |
     */
 
-    'dashboard' => [
-        'enabled' => true,
-        'path' => 'guardian',
-        'allowed_ips' => [],
-        'poll_interval' => 30,
-        'per_page' => 50,
+    'hub' => [
+        'url' => env('GUARDIAN_HUB_URL'),
+        'project_id' => env('GUARDIAN_HUB_PROJECT_ID'),
+        'api_token' => env('GUARDIAN_HUB_API_TOKEN'),
+        'timeout' => 5,                    // seconds before HTTP request times out
+        'retry' => 1,                      // number of retry attempts on failure
+        'async' => true,                   // true = send via queued job (recommended)
+        'queue' => 'default',              // queue name for async dispatches
     ],
+
 ];

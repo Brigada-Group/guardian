@@ -9,7 +9,7 @@ use Brigada\Guardian\Commands\RunChecksCommand;
 use Brigada\Guardian\Commands\StatusCommand;
 use Brigada\Guardian\Commands\TestCommand;
 use Brigada\Guardian\Exceptions\ExceptionNotifier;
-use Brigada\Guardian\Http\Middleware\RequestMonitor;
+use Brigada\Guardian\Transport\NightwatchClient; 
 use Brigada\Guardian\Listeners\CacheListener;
 use Brigada\Guardian\Listeners\CommandListener;
 use Brigada\Guardian\Listeners\JobListener;
@@ -44,8 +44,9 @@ use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Notifications\Events\NotificationFailed;
 use Illuminate\Notifications\Events\NotificationSent;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+
+
 
 class GuardianServiceProvider extends ServiceProvider
 {
@@ -97,12 +98,11 @@ class GuardianServiceProvider extends ServiceProvider
 
         $this->app->singleton(ExceptionNotifier::class);
 
+        $this->app->singleton(NightwatchClient::class);
+
         $this->app->singleton(CacheListener::class);
 
-        $this->app->resolving('router', function ($router) {
-            $router->aliasMiddleware('guardian.gate', \Brigada\Guardian\Http\Middleware\GuardianGate::class);
-            $router->aliasMiddleware('guardian.ip-filter', \Brigada\Guardian\Http\Middleware\GuardianIpFilter::class);
-        });
+        
     }
 
     public function boot(): void
@@ -113,12 +113,7 @@ class GuardianServiceProvider extends ServiceProvider
 
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
 
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'guardian');
-
-        if (config('guardian.dashboard.enabled', true)) {
-            $this->registerDashboardRoutes();
-            $this->registerDashboardRateLimiter();
-        }
+        
 
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -141,6 +136,18 @@ class GuardianServiceProvider extends ServiceProvider
             $dailyTime = config('guardian.notifications.daily_summary_time', '06:00');
             $weeklyDay = $this->parseWeeklyDay(config('guardian.notifications.weekly_summary_day', 'monday'));
 
+            $schedule->call(function() {
+                $client = app(NightwatchClient::class);
+
+                if ($client->isConfigured())
+                {
+                    $client->send('heartbeat',[
+                        'php_version' => PHP_VERSION,
+                        'laravel_version' => app()->version(),
+                    ]);
+                }
+            })->everyFiveMinutes();
+            
             $schedule->command('guardian:run every_5_min')->everyFiveMinutes();
             $schedule->command('guardian:run hourly')->hourly();
             $schedule->command('guardian:run daily')->dailyAt($dailyTime);
@@ -220,21 +227,7 @@ class GuardianServiceProvider extends ServiceProvider
         }
     }
 
-    private function registerDashboardRoutes(): void
-    {
-        Route::prefix(config('guardian.dashboard.path', 'guardian'))
-            ->middleware(['web', 'guardian.gate', 'guardian.ip-filter'])
-            ->group(__DIR__ . '/../routes/guardian.php');
-    }
 
-    private function registerDashboardRateLimiter(): void
-    {
-        if (class_exists(\Illuminate\Cache\RateLimiting\Limit::class)) {
-            \Illuminate\Support\Facades\RateLimiter::for('guardian-api', function ($request) {
-                return \Illuminate\Cache\RateLimiting\Limit::perMinute(60)->by($request->ip());
-            });
-        }
-    }
 
     private function parseWeeklyDay(string $day): int
     {

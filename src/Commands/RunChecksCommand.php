@@ -9,6 +9,8 @@ use Brigada\Guardian\Notifications\DiscordNotifier;
 use Brigada\Guardian\Results\CheckResult;
 use Brigada\Guardian\Support\CheckRegistry;
 use Brigada\Guardian\Support\Deduplicator;
+use Brigada\Guardian\Transport\NightwatchClient;
+use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Console\Command;
 
 class RunChecksCommand extends Command
@@ -73,6 +75,8 @@ class RunChecksCommand extends Command
             $this->handleNotification($check, $result, $deduplicator, $notifier, $messageBuilder);
         }
 
+        $this->forwardHealthToHub($results);
+
         if (in_array($schedule, [Schedule::Daily, Schedule::Weekly])) {
             $title = $schedule === Schedule::Weekly ? 'Weekly Full Report' : 'Daily Health Summary';
             $payload = $messageBuilder->buildSummary($title, $results);
@@ -128,5 +132,30 @@ class RunChecksCommand extends Command
             $notifier->send($payload);
         }
         $deduplicator->record(class_basename($check), $result, $shouldNotify);
+    }
+
+    private function forwardHealthToHub(array $results): void
+    {
+        if (empty($results)) {
+            return;
+        }
+
+        $data = [
+            'checks' => collect($results)->map(fn (CheckResult $r, string $name) => [
+                'name' => $name,
+                'status' => $r->status->value,
+                'message' => $r->message,
+                'metadata' => $r->metadata,
+            ])->values()->all(),
+        ];
+
+        try {
+            if (config('guardian.hub.async', true)) {
+                SendToNightwatchClient::dispatch('health', $data);
+            } else {
+                app(NightwatchClient::class)->send('health', $data);
+            }
+        } catch (\Throwable) {
+        }
     }
 }

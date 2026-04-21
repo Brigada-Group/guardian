@@ -5,6 +5,8 @@ namespace Brigada\Guardian\Listeners;
 use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
 use Brigada\Guardian\Models\OutgoingHttpLog;
+use Brigada\Guardian\Transport\NightwatchClient;
+use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Http\Client\Events\ConnectionFailed;
 use Illuminate\Http\Client\Events\ResponseReceived;
 use Illuminate\Http\Client\Request;
@@ -24,7 +26,7 @@ class OutgoingHttpListener
         $durationMs = $this->extractDuration($response);
 
         try {
-            OutgoingHttpLog::create([
+            $data = [
                 'method' => $request->method(),
                 'url' => mb_substr($url, 0, 2048),
                 'host' => $host,
@@ -32,7 +34,15 @@ class OutgoingHttpListener
                 'duration_ms' => $durationMs,
                 'failed' => $statusCode >= 500,
                 'created_at' => now(),
-            ]);
+            ];
+
+            OutgoingHttpLog::create($data);
+
+            if (config('guardian.hub.async', true)) {
+                SendToNightwatchClient::dispatch('outgoing-http', $data);
+            } else {
+                app(NightwatchClient::class)->send('outgoing-http', $data);
+            }
         } catch (\Throwable) {
             // Don't break the app
         }
@@ -64,14 +74,22 @@ class OutgoingHttpListener
         $host = parse_url($url, PHP_URL_HOST) ?: 'unknown';
 
         try {
-            OutgoingHttpLog::create([
+            $data = [
                 'method' => $request->method(),
                 'url' => mb_substr($url, 0, 2048),
                 'host' => $host,
                 'failed' => true,
                 'error_message' => 'Connection failed',
                 'created_at' => now(),
-            ]);
+            ];
+
+            OutgoingHttpLog::create($data);
+
+            if (config('guardian.hub.async', true)) {
+                SendToNightwatchClient::dispatch('outgoing-http', $data);
+            } else {
+                app(NightwatchClient::class)->send('outgoing-http', $data);
+            }
         } catch (\Throwable) {
             // Don't break the app
         }

@@ -5,6 +5,8 @@ namespace Brigada\Guardian\Listeners;
 use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
 use Brigada\Guardian\Models\ScheduledTaskLog;
+use Brigada\Guardian\Transport\NightwatchClient;
+use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Console\Events\ScheduledTaskFailed;
 use Illuminate\Console\Events\ScheduledTaskFinished;
 use Illuminate\Console\Events\ScheduledTaskSkipped;
@@ -32,7 +34,7 @@ class ScheduledTaskListener
         $taskName = $task->command ?? $task->description ?? 'unknown';
 
         try {
-            ScheduledTaskLog::create([
+            $data = [
                 'task' => $taskName,
                 'description' => $task->description,
                 'expression' => $task->expression,
@@ -40,7 +42,15 @@ class ScheduledTaskListener
                 'duration_ms' => $durationMs,
                 'output' => $this->getOutput($task),
                 'created_at' => now(),
-            ]);
+            ];
+
+            ScheduledTaskLog::create($data);
+
+            if (config('guardian.hub.async', true)) {
+                SendToNightwatchClient::dispatch('scheduled-tasks', $data);
+            } else {
+                app(NightwatchClient::class)->send('scheduled-tasks', $data);
+            }
         } catch (\Throwable) {
             // Don't break the app
         }
@@ -67,7 +77,7 @@ class ScheduledTaskListener
         $errorMessage = $event->exception->getMessage();
 
         try {
-            ScheduledTaskLog::create([
+            $data = [
                 'task' => $taskName,
                 'description' => $task->description,
                 'expression' => $task->expression,
@@ -75,7 +85,15 @@ class ScheduledTaskListener
                 'duration_ms' => $durationMs,
                 'output' => mb_substr($errorMessage, 0, 5000),
                 'created_at' => now(),
-            ]);
+            ];
+
+            ScheduledTaskLog::create($data);
+
+            if (config('guardian.hub.async', true)) {
+                SendToNightwatchClient::dispatch('scheduled-tasks', $data);
+            } else {
+                app(NightwatchClient::class)->send('scheduled-tasks', $data);
+            }
         } catch (\Throwable) {
             // Don't break the app
         }
@@ -94,13 +112,21 @@ class ScheduledTaskListener
         $taskName = $task->command ?? $task->description ?? 'unknown';
 
         try {
-            ScheduledTaskLog::create([
+            $data = [
                 'task' => $taskName,
                 'description' => $task->description,
                 'expression' => $task->expression,
                 'status' => 'skipped',
                 'created_at' => now(),
-            ]);
+            ];
+
+            ScheduledTaskLog::create($data);
+
+            if (config('guardian.hub.async', true)) {
+                SendToNightwatchClient::dispatch('scheduled-tasks', $data);
+            } else {
+                app(NightwatchClient::class)->send('scheduled-tasks', $data);
+            }
         } catch (\Throwable) {
             // Don't break the app
         }
