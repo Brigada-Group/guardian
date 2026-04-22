@@ -26,18 +26,19 @@ return new class extends Migration
             $table->index(['queue', 'created_at']);
         });
 
-        Schema::create('guardian_log_entries', function (Blueprint $table) {
+        Schema::create('guardian_log_entries',function (Blueprint $table) {
             $table->id();
-            $table->string('level', 20);                // emergency, alert, critical, error, warning
+            $table->string('level',20);
             $table->text('message');
-            $table->string('channel', 50)->nullable();
+            $table->string('channel',50)->nullable();
             $table->json('context')->nullable();
             $table->timestamp('created_at');
 
+
             $table->index('created_at');
-            $table->index(['level', 'created_at']);
-            $table->index(['channel', 'created_at']);
-        });
+            $table->index(['level','created_at']);
+            $table->index(['channel','created_at']);
+        })
     }
 
     public function down(): void

@@ -172,4 +172,19 @@ return [
         'queue' => 'default',              // queue name for async dispatches
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Audits (composer audit + npm audit)
+    |--------------------------------------------------------------------------
+    |
+    | Runs once per day via the Laravel scheduler and POSTs the raw audit
+    | output to Nightwatch's /api/ingest/composer-audit and /api/ingest/npm-audit
+    | endpoints. Set the time the scheduled job fires with GUARDIAN_AUDITS_TIME.
+    |
+    */
+
+    'audits' => [
+        'time' => env('GUARDIAN_AUDITS_TIME', '03:00'),
+    ],
+
 ];

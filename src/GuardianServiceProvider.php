@@ -6,6 +6,7 @@ use Brigada\Guardian\Checks;
 use Brigada\Guardian\Commands\InstallCommand;
 use Brigada\Guardian\Commands\PruneCommand;
 use Brigada\Guardian\Commands\RunChecksCommand;
+use Brigada\Guardian\Commands\SendAuditsCommand;
 use Brigada\Guardian\Commands\StatusCommand;
 use Brigada\Guardian\Commands\TestCommand;
 use Brigada\Guardian\Exceptions\ExceptionNotifier;
@@ -122,6 +123,7 @@ class GuardianServiceProvider extends ServiceProvider
                 TestCommand::class,
                 InstallCommand::class,
                 PruneCommand::class,
+                SendAuditsCommand::class,
             ]);
         }
 
@@ -152,6 +154,7 @@ class GuardianServiceProvider extends ServiceProvider
             $schedule->command('guardian:run hourly')->hourly();
             $schedule->command('guardian:run daily')->dailyAt($dailyTime);
             $schedule->command('guardian:run weekly')->weeklyOn($weeklyDay, '07:00');
+            $schedule->command('guardian:audits')->dailyAt(config('guardian.audits.time', '03:00'));
         });
     }
 
