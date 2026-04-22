@@ -4,7 +4,6 @@ namespace Brigada\Guardian\Listeners;
 
 use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
-use Brigada\Guardian\Models\JobLog;
 use Brigada\Guardian\Transport\NightwatchClient;
 use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Queue\Events\JobFailed;
@@ -38,7 +37,7 @@ class JobListener
                 'attempt' => $event->job->attempts(),
                 'created_at' => now(),
             ];
-            JobLog::create($data);
+
             if (config('guardian.hub.async', true)) {
                 SendToNightwatchClient::dispatch('jobs', $data);
             } else {
@@ -82,8 +81,6 @@ class JobListener
                 ],
                 'created_at' => now(),
             ];
-
-            JobLog::create($data);
 
             if (config('guardian.hub.async', true)) {
                 SendToNightwatchClient::dispatch('jobs', $data);
