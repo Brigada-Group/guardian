@@ -4,9 +4,9 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
-    public function up(): void
+
+return new class extends Migration {
+    public function up(): void 
     {
         Schema::create('guardian_job_logs', function (Blueprint $table) {
             $table->id();
@@ -28,21 +28,16 @@ return new class extends Migration
 
         Schema::create('guardian_log_entries', function (Blueprint $table) {
             $table->id();
-            $table->string('level', 20);                // emergency, alert, critical, error, warning
+            $table->string('level',20);
             $table->text('message');
-            $table->string('channel', 50)->nullable();
+            $table->string('channel',50)->nullable();
             $table->json('context')->nullable();
             $table->timestamp('created_at');
 
+
             $table->index('created_at');
-            $table->index(['level', 'created_at']);
-            $table->index(['channel', 'created_at']);
+            $table->index(['level','created_at']);
+            $table->index(['channel','created_at']);
         });
     }
-
-    public function down(): void
-    {
-        Schema::dropIfExists('guardian_job_logs');
-        Schema::dropIfExists('guardian_log_entries');
-    }
-};
+}

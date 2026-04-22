@@ -5,6 +5,8 @@ namespace Brigada\Guardian\Listeners;
 use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
 use Brigada\Guardian\Models\MailLog;
+use Brigada\Guardian\Transport\NightwatchClient;
+use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Mail\Events\MessageSent;
 
@@ -17,13 +19,21 @@ class MailListener
         $message = $event->sent->getOriginalMessage();
 
         try {
-            MailLog::create([
+            $data = [
                 'mailable' => $event->data['__mailable'] ?? null,
                 'subject' => $message->getSubject(),
                 'to' => $this->maybeHashRecipients($this->formatAddresses($message->getTo())),
                 'status' => 'sent',
                 'created_at' => now(),
-            ]);
+            ];
+
+            MailLog::create($data);
+
+            if (config('guardian.hub.async', true)) {
+                SendToNightwatchClient::dispatch('mail', $data);
+            } else {
+                app(NightwatchClient::class)->send('mail', $data);
+            }
         } catch (\Throwable) {
             // Don't break the app
         }
@@ -32,13 +42,21 @@ class MailListener
     public function handleFailed(\Throwable $exception, string $to = '', string $subject = ''): void
     {
         try {
-            MailLog::create([
+            $data = [
                 'subject' => $subject,
                 'to' => $to,
                 'status' => 'failed',
                 'error_message' => mb_substr($exception->getMessage(), 0, 1000),
                 'created_at' => now(),
-            ]);
+            ];
+
+            MailLog::create($data);
+
+            if (config('guardian.hub.async', true)) {
+                SendToNightwatchClient::dispatch('mail', $data);
+            } else {
+                app(NightwatchClient::class)->send('mail', $data);
+            }
         } catch (\Throwable) {
             // Don't break the app
         }

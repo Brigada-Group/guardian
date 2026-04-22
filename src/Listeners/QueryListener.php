@@ -6,6 +6,8 @@ use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
 use Brigada\Guardian\Models\QueryLog;
 use Brigada\Guardian\Security\QuerySanitizer;
+use Brigada\Guardian\Transport\NightwatchClient;
+use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Database\Events\QueryExecuted;
 
 class QueryListener
@@ -33,13 +35,13 @@ class QueryListener
             return;
         }
 
-        $caller = $this->findCaller();
-
         try {
             $metadata = null;
+            
             if ($isNPlusOne) {
                 $metadata = ['repeat_count' => self::$queryCounts[$normalized] ?? 0];
             }
+
             if ($isSlow) {
                 $metadata = array_merge($metadata ?? [], [
                     'threshold_ms' => $slowThreshold,
@@ -47,7 +49,7 @@ class QueryListener
                 ]);
             }
 
-            QueryLog::create([
+            $data = [
                 'sql' => mb_substr(QuerySanitizer::sanitize($event->sql), 0, 5000),
                 'duration_ms' => $durationMs,
                 'connection' => $event->connectionName,
@@ -57,8 +59,16 @@ class QueryListener
                 'is_n_plus_one' => $isNPlusOne,
                 'metadata' => $metadata,
                 'created_at' => now(),
-            ]);
-        } catch (\Throwable) {
+            ];
+
+            QueryLog::create($data);
+
+            if (config('guardian.hub.async', true)) {
+                SendToNightwatchClient::dispatch('queries', $data);
+            } else {
+                app(NightwatchClient::class)->send('queries', $data);
+            }
+        }  catch (\Throwable) {
             // Don't break the app
         }
 

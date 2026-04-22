@@ -6,6 +6,8 @@ use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
 use Brigada\Guardian\Models\RequestLog;
 use Brigada\Guardian\Support\IpAnonymizer;
+use Brigada\Guardian\Transport\NightwatchClient;
+use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -33,7 +35,8 @@ class RequestMonitor
     private function logRequest(Request $request, float $durationMs, int $statusCode): void
     {
         try {
-            RequestLog::create([
+
+            $data = [
                 'method' => $request->method(),
                 'uri' => mb_substr($request->path(), 0, 2048),
                 'route_name' => $request->route()?->getName(),
@@ -42,7 +45,16 @@ class RequestMonitor
                 'ip' => IpAnonymizer::anonymize($request->ip()),
                 'user_id' => Auth::id(),
                 'created_at' => now(),
-            ]);
+            ];
+
+            RequestLog::create($data);
+
+            if (config('guardian.hub.async', true)) {
+                SendToNightwatchClient::dispatch('requests', $data);
+            } else {
+                app(NightwatchClient::class)->send('requests', $data);
+            }
+
         } catch (\Throwable) {
             // Don't let monitoring break the app
         }

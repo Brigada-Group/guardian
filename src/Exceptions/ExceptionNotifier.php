@@ -10,6 +10,8 @@ use Brigada\Guardian\Security\HeaderFilter;
 use Brigada\Guardian\Security\StackTraceSanitizer;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
+use Brigada\Guardian\Transport\NightwatchClient;
+use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class ExceptionNotifier
@@ -64,6 +66,8 @@ class ExceptionNotifier
 
         $this->notifier->send($payload);
         $this->record($dedupKey, $e, true, $context);
+
+        $this->forwardToNightwatch($e,$context);
     }
 
     private function dedupKey(\Throwable $e): string
@@ -157,5 +161,31 @@ class ExceptionNotifier
         $lines = array_slice($lines, 0, 10);
 
         return implode("\n", $lines);
+    }
+
+    private function forwardToNightwatch(\Throwable $e, array $context): void 
+    {
+        $data = [
+            'exception_class' => get_class($e),
+            'message' => mb_substr(StackTraceSanitizer::sanitize($e->getMessage()), 0, 1000),
+            'file' => StackTraceSanitizer::sanitize($e->getFile()),
+            'line' => $e->getLine(),
+            'url' => $context['url'] ?? 'N/A',
+            'status_code' => $context['status_code'] ?? 500,
+            'user' => $context['user'] ?? 'N/A',
+            'ip' => $context['ip'] ?? 'N/A',
+            'headers' => $context['headers'] ?? 'N/A',
+            'stack_trace' => StackTraceSanitizer::sanitize($this->formatStackTrace($e)),
+            'severity' => 'error',
+        ];
+
+        try {
+            if (config('guardian.hub.async', true)) {
+                SendToNightwatchClient::dispatch('exceptions', $data);
+            } else {
+                app(NightwatchClient::class)->send('exceptions', $data);
+            }
+        } catch (\Throwable) {
+        }
     }
 }

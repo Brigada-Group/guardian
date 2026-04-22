@@ -4,8 +4,9 @@ namespace Brigada\Guardian\Listeners;
 
 use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
-use Brigada\Guardian\Models\LogEntry;
 use Brigada\Guardian\Security\StackTraceSanitizer;
+use Brigada\Guardian\Transport\NightwatchClient;
+use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Log\Events\MessageLogged;
 
 class LogListener
@@ -33,13 +34,19 @@ class LogListener
         $safeContext = $this->sanitizeContext($context);
 
         try {
-            LogEntry::create([
+            $data = [
                 'level' => $event->level,
                 'message' => $message,
                 'channel' => $context['__channel'] ?? config('logging.default', 'stack'),
                 'context' => $safeContext ?: null,
                 'created_at' => now(),
-            ]);
+            ];
+
+            if (config('guardian.hub.async', true)) {
+                SendToNightwatchClient::dispatch('logs', $data);
+            } else {
+                app(NightwatchClient::class)->send('logs', $data);
+            }
         } catch (\Throwable) {
             // Don't break the app
         }
