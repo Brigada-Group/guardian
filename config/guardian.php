@@ -33,6 +33,13 @@ return [
         ],
     ],
 
+    'client_errors' => [
+        'enabled' => env('GUARDIAN_CLIENT_ERRORS_ENABLED', true),
+        'route' => 'guardian/client-errors',
+        'middleware' => ['web', 'throttle:60,1'],
+        'capture_console_error' => env('GUARDIAN_CLIENT_CAPTURE_CONSOLE_ERROR', false),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Real-time Monitoring (Event-based)
