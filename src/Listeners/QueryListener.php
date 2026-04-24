@@ -35,6 +35,8 @@ class QueryListener
             return;
         }
 
+        $caller = $this->findCaller();
+
         try {
             $metadata = null;
             
@@ -104,12 +106,9 @@ class QueryListener
 
     private function detectNPlusOne(string $normalized): bool
     {
-        // Reset between requests
-        try {
-            $currentId = request()?->fingerprint() ?? 'cli-' . getmypid();
-        } catch (\Throwable) {
-            $currentId = 'cli-' . getmypid();
-        }
+        // Reset between requests. Never use Request::fingerprint() — it can exhaust memory during
+        // artisan (migrate, etc.) or unusual request state; hub sync HTTP also amplifies query volume.
+        $currentId = $this->currentRequestCorrelationId();
         if (self::$requestId !== $currentId) {
             self::$queryCounts = [];
             self::$requestId = $currentId;
@@ -121,6 +120,24 @@ class QueryListener
 
         // Only flag at the exact threshold to avoid repeated alerts
         return self::$queryCounts[$normalized] === $threshold;
+    }
+
+    private function currentRequestCorrelationId(): string
+    {
+        if (app()->runningInConsole()) {
+            return 'cli-' . getmypid();
+        }
+
+        try {
+            $req = request();
+            if ($req === null) {
+                return 'no-request';
+            }
+
+            return sha1($req->method() . '|' . $req->path() . '|' . spl_object_id($req));
+        } catch (\Throwable) {
+            return 'cli-' . getmypid();
+        }
     }
 
     private function findCaller(): array

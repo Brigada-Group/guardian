@@ -35,7 +35,7 @@ class InstallCommand extends Command
         $this->newLine();
         $this->info('Guardian installed successfully!');
         $this->newLine();
-        $this->line('Browser errors: add @include(\'guardian::partials.client-errors-scripts\') before </body> in your app layout (csrf meta required).');
+        $this->line('Browser errors: add @include(\'guardian::partials.client-errors-scripts\') early (right after <body> or CSRF meta), not at the very end — csrf meta required.');
         $this->newLine();
 
         // Check for webhook

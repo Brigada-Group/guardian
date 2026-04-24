@@ -9,7 +9,6 @@ use Brigada\Guardian\Transport\NightwatchClient;
 use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Http\Client\Events\ConnectionFailed;
 use Illuminate\Http\Client\Events\ResponseReceived;
-use Illuminate\Http\Client\Request;
 
 class OutgoingHttpListener
 {
@@ -21,6 +20,11 @@ class OutgoingHttpListener
         $response = $event->response;
 
         $url = $request->url();
+
+        if ($this->isGuardianHubUrl($url)) {
+            return;
+        }
+
         $host = parse_url($url, PHP_URL_HOST) ?: 'unknown';
         $statusCode = $response->status();
         $durationMs = $this->extractDuration($response);
@@ -71,6 +75,11 @@ class OutgoingHttpListener
     {
         $request = $event->request;
         $url = $request->url();
+
+        if ($this->isGuardianHubUrl($url)) {
+            return;
+        }
+
         $host = parse_url($url, PHP_URL_HOST) ?: 'unknown';
 
         try {
@@ -107,5 +116,19 @@ class OutgoingHttpListener
         $transferTime = $response->transferStats?->getTransferTime();
 
         return $transferTime ? round($transferTime * 1000, 2) : null;
+    }
+
+    
+    private function isGuardianHubUrl(string $url): bool
+    {
+        $base = config('guardian.hub.url');
+        if (! is_string($base) || $base === '') {
+            return false;
+        }
+
+        $base = rtrim($base, '/');
+        $urlTrim = rtrim($url, '/');
+
+        return $base !== '' && str_starts_with($urlTrim, $base);
     }
 }
