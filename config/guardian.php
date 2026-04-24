@@ -38,6 +38,9 @@ return [
         'route' => 'guardian/client-errors',
         'middleware' => ['web', 'throttle:60,1'],
         'capture_console_error' => env('GUARDIAN_CLIENT_CAPTURE_CONSOLE_ERROR', false),
+        'hub_ingest_endpoint' => env('GUARDIAN_CLIENT_ERRORS_HUB_INGEST_ENDPOINT', 'client-errors'),
+        'user_data_attributes' => [],
+        'user_payload_attributes' => [],
     ],
 
     /*
