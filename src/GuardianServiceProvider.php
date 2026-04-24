@@ -112,9 +112,17 @@ class GuardianServiceProvider extends ServiceProvider
             __DIR__ . '/../config/guardian.php' => config_path('guardian.php'),
         ], 'guardian-config');
 
+        $this->publishes([
+            __DIR__ . '/../resources/js/guardian-client.js' => public_path('vendor/guardian/guardian-client.js'),
+        ], 'guardian-assets');
+
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'guardian');
+
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
 
-        
+        if (config('guardian.client_errors.enabled',true)) {
+            $this->loadRoutesFrom(__DIR__ . '/../routes/guardian-client-errors.php');
+        }
 
         if ($this->app->runningInConsole()) {
             $this->commands([

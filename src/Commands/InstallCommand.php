@@ -21,6 +21,11 @@ class InstallCommand extends Command
             '--tag' => 'guardian-config',
         ]);
 
+        $this->info('Publishing client error reporter asset...');
+        $this->call('vendor:publish', [
+            '--tag' => 'guardian-assets',
+        ]);
+
         // Run migrations
         $this->info('Running migrations...');
         $this->call('migrate', [
@@ -29,6 +34,8 @@ class InstallCommand extends Command
 
         $this->newLine();
         $this->info('Guardian installed successfully!');
+        $this->newLine();
+        $this->line('Browser errors: add @include(\'guardian::partials.client-errors-scripts\') before </body> in your app layout (csrf meta required).');
         $this->newLine();
 
         // Check for webhook
