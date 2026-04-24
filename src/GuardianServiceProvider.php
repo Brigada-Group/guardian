@@ -121,7 +121,7 @@ class GuardianServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
 
         if (config('guardian.client_errors.enabled',true)) {
-            $this->loadRoutesFrom(__DIR__ . '/../routes/guardian-client-errors.php');
+            $this->loadRoutesFrom(__DIR__ . '/Routes/guardian-client-errors.php');
         }
 
         if ($this->app->runningInConsole()) {
