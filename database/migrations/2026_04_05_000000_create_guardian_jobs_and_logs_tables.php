@@ -40,4 +40,4 @@ return new class extends Migration {
             $table->index(['channel','created_at']);
         });
     }
-}
+};
