@@ -39,6 +39,8 @@ return [
         'middleware' => ['web', 'throttle:60,1'],
         'capture_console_error' => env('GUARDIAN_CLIENT_CAPTURE_CONSOLE_ERROR', false),
         'hub_ingest_endpoint' => env('GUARDIAN_CLIENT_ERRORS_HUB_INGEST_ENDPOINT', 'client-errors'),
+        // Guards tried in order for POST /guardian/client-errors (session cookie). Default guard alone often misses SPA/Sanctum logins.
+        'auth_guards' => ['web', 'sanctum'],
         'user_data_attributes' => [],
         'user_payload_attributes' => [],
     ],

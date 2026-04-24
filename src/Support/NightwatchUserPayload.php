@@ -12,13 +12,9 @@ final class NightwatchUserPayload
 {
     public static function resolve(): array
     {
-        if (! Auth::check()) {
-            return self::guest();
-        }
+        $user = self::firstAuthenticatedUser();
 
-        $user = Auth::user();
-
-        if (! $user instanceof Authenticatable) {
+        if ($user === null) {
             return self::guest();
         }
 
@@ -57,6 +53,46 @@ final class NightwatchUserPayload
         }
 
         return $payload;
+    }
+
+    /**
+     * Resolve the logged-in user for a web-session request.
+     * Auth::check() only uses the default guard; many apps authenticate via `web` or `sanctum` while default is `api`.
+     *
+     * @return Authenticatable|null
+     */
+    private static function firstAuthenticatedUser(): ?Authenticatable
+    {
+        $guards = config('guardian.client_errors.auth_guards', ['web', 'sanctum']);
+        if (! is_array($guards)) {
+            $guards = ['web', 'sanctum'];
+        }
+
+        $registered = array_keys(config('auth.guards', []));
+
+        foreach ($guards as $guard) {
+            if (! is_string($guard) || $guard === '') {
+                continue;
+            }
+            if (! in_array($guard, $registered, true)) {
+                continue;
+            }
+            if (! Auth::guard($guard)->check()) {
+                continue;
+            }
+            $candidate = Auth::guard($guard)->user();
+            if ($candidate instanceof Authenticatable) {
+                return $candidate;
+            }
+        }
+
+        if (Auth::check()) {
+            $fallback = Auth::user();
+
+            return $fallback instanceof Authenticatable ? $fallback : null;
+        }
+
+        return null;
     }
 
     public static function guest(): array
