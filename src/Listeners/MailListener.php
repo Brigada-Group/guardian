@@ -5,6 +5,7 @@ namespace Brigada\Guardian\Listeners;
 use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
 use Brigada\Guardian\Models\MailLog;
+use Brigada\Guardian\Support\TraceContext;
 use Brigada\Guardian\Transport\NightwatchClient;
 use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Mail\Events\MessageSending;
@@ -29,10 +30,12 @@ class MailListener
 
             MailLog::create($data);
 
+            $payload = $data + ['trace_id' => TraceContext::current()];
+
             if (config('guardian.hub.async', true)) {
-                SendToNightwatchClient::dispatch('mail', $data);
+                SendToNightwatchClient::dispatch('mail', $payload);
             } else {
-                app(NightwatchClient::class)->send('mail', $data);
+                app(NightwatchClient::class)->send('mail', $payload);
             }
         } catch (\Throwable) {
             // Don't break the app
@@ -52,10 +55,12 @@ class MailListener
 
             MailLog::create($data);
 
+            $payload = $data + ['trace_id' => TraceContext::current()];
+
             if (config('guardian.hub.async', true)) {
-                SendToNightwatchClient::dispatch('mail', $data);
+                SendToNightwatchClient::dispatch('mail', $payload);
             } else {
-                app(NightwatchClient::class)->send('mail', $data);
+                app(NightwatchClient::class)->send('mail', $payload);
             }
         } catch (\Throwable) {
             // Don't break the app

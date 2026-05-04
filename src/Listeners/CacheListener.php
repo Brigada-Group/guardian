@@ -5,6 +5,7 @@ namespace Brigada\Guardian\Listeners;
 use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
 use Brigada\Guardian\Models\CacheLog;
+use Brigada\Guardian\Support\TraceContext;
 use Brigada\Guardian\Transport\NightwatchClient;
 use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Cache\Events\CacheHit;
@@ -79,10 +80,12 @@ class CacheListener
 
                 CacheLog::create($data);
 
+                $payload = $data + ['trace_id' => TraceContext::current()];
+
                 if (config('guardian.hub.async', true)) {
-                    SendToNightwatchClient::dispatch('cache', $data);
+                    SendToNightwatchClient::dispatch('cache', $payload);
                 } else {
-                    app(NightwatchClient::class)->send('cache', $data);
+                    app(NightwatchClient::class)->send('cache', $payload);
                 }
             } catch (\Throwable) {
                 // Don't break the app

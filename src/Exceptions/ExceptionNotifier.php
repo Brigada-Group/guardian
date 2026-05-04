@@ -8,6 +8,7 @@ use Brigada\Guardian\Notifications\DiscordMessageBuilder;
 use Brigada\Guardian\Notifications\DiscordNotifier;
 use Brigada\Guardian\Security\HeaderFilter;
 use Brigada\Guardian\Security\StackTraceSanitizer;
+use Brigada\Guardian\Support\TraceContext;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
 use Brigada\Guardian\Transport\NightwatchClient;
@@ -179,11 +180,13 @@ class ExceptionNotifier
             'severity' => 'error',
         ];
 
+        $payload = $data + ['trace_id' => TraceContext::current()];
+
         try {
             if (config('guardian.hub.async', true)) {
-                SendToNightwatchClient::dispatch('exceptions', $data);
+                SendToNightwatchClient::dispatch('exceptions', $payload);
             } else {
-                app(NightwatchClient::class)->send('exceptions', $data);
+                app(NightwatchClient::class)->send('exceptions', $payload);
             }
         } catch (\Throwable) {
         }

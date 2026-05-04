@@ -6,19 +6,25 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 
 class SendToNightwatchClient implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable;
 
     public int $tries = 2;
+
     public int $backoff = 5;
 
-    public function __construct(
-        private readonly string $endpoint,
-        private readonly array $data,
-    ) {
+    /** @var string Ingest path segment, e.g. "exceptions", "requests". */
+    public string $endpoint;
+
+    /** @var array<string, mixed> Payload merged server-side with project_id, environment, etc. */
+    public array $data;
+
+    public function __construct(string $endpoint, array $data)
+    {
+        $this->endpoint = $endpoint;
+        $this->data = $data;
         $this->onQueue(config('guardian.hub.queue', 'default'));
     }
 

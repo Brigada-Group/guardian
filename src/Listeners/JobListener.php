@@ -5,6 +5,7 @@ namespace Brigada\Guardian\Listeners;
 use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
 use Brigada\Guardian\Transport\NightwatchClient;
+use Brigada\Guardian\Support\TraceContext;
 use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
@@ -35,6 +36,7 @@ class JobListener
                 'status' => 'completed',
                 'duration_ms' => $durationMs,
                 'attempt' => $event->job->attempts(),
+                'trace_id' => TraceContext::current(),
                 'created_at' => now(),
             ];
 
@@ -80,6 +82,7 @@ class JobListener
                     'line' => $event->exception?->getLine(),
                 ],
                 'created_at' => now(),
+                'trace_id' => TraceContext::current()
             ];
 
             if (config('guardian.hub.async', true)) {

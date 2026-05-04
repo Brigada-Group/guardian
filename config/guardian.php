@@ -199,4 +199,26 @@ return [
         'time' => env('GUARDIAN_AUDITS_TIME', '03:00'),
     ],
 
+      /*
+    |--------------------------------------------------------------------------
+    | Distributed Tracing
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, every incoming request is assigned a 32-character trace ID
+    | (or reuses one from an upstream W3C `traceparent` header) and that ID is
+    | attached to every event sent to the Hub — requests, queries, jobs,
+    | outgoing HTTP, logs, mail, notifications, cache, and exceptions — so the
+    | Hub can stitch them into a single waterfall.
+    |
+    | propagate_outbound: when true, Guardian injects a W3C `traceparent`
+    | header into outbound `Http::` calls so downstream Laravel services
+    | monitored by the same Hub join the same trace.
+    |
+    */
+
+    'tracing' => [
+        'enabled' => env('GUARDIAN_TRACING_ENABLED', true),
+        'propagate_outbound' => env('GUARDIAN_TRACING_PROPAGATE_OUTBOUND', false),
+    ],
+
 ];

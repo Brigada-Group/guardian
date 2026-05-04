@@ -5,6 +5,7 @@ namespace Brigada\Guardian\Listeners;
 use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
 use Brigada\Guardian\Models\ScheduledTaskLog;
+use Brigada\Guardian\Support\TraceContext;
 use Brigada\Guardian\Transport\NightwatchClient;
 use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Console\Events\ScheduledTaskFailed;
@@ -46,10 +47,12 @@ class ScheduledTaskListener
 
             ScheduledTaskLog::create($data);
 
+            $payload = $data + ['trace_id' => TraceContext::current()];
+
             if (config('guardian.hub.async', true)) {
-                SendToNightwatchClient::dispatch('scheduled-tasks', $data);
+                SendToNightwatchClient::dispatch('scheduled-tasks', $payload);
             } else {
-                app(NightwatchClient::class)->send('scheduled-tasks', $data);
+                app(NightwatchClient::class)->send('scheduled-tasks', $payload);
             }
         } catch (\Throwable) {
             // Don't break the app
@@ -89,10 +92,12 @@ class ScheduledTaskListener
 
             ScheduledTaskLog::create($data);
 
+            $payload = $data + ['trace_id' => TraceContext::current()];
+
             if (config('guardian.hub.async', true)) {
-                SendToNightwatchClient::dispatch('scheduled-tasks', $data);
+                SendToNightwatchClient::dispatch('scheduled-tasks', $payload);
             } else {
-                app(NightwatchClient::class)->send('scheduled-tasks', $data);
+                app(NightwatchClient::class)->send('scheduled-tasks', $payload);
             }
         } catch (\Throwable) {
             // Don't break the app
@@ -122,10 +127,12 @@ class ScheduledTaskListener
 
             ScheduledTaskLog::create($data);
 
+            $payload = $data + ['trace_id' => TraceContext::current()];
+
             if (config('guardian.hub.async', true)) {
-                SendToNightwatchClient::dispatch('scheduled-tasks', $data);
+                SendToNightwatchClient::dispatch('scheduled-tasks', $payload);
             } else {
-                app(NightwatchClient::class)->send('scheduled-tasks', $data);
+                app(NightwatchClient::class)->send('scheduled-tasks', $payload);
             }
         } catch (\Throwable) {
             // Don't break the app

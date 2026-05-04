@@ -4,6 +4,7 @@ namespace Brigada\Guardian\Http\Controllers;
 
 use Brigada\Guardian\Security\StackTraceSanitizer;
 use Brigada\Guardian\Support\NightwatchUserPayload;
+use Brigada\Guardian\Support\TraceContext;
 use Brigada\Guardian\Transport\NightwatchClient;
 use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Http\JsonResponse;
@@ -66,13 +67,15 @@ class ClientErrorController extends Controller
             'created_at' => now(),
         ]);
 
+        $payload = $data + ['trace_id' => TraceContext::current()];
+
         $ingestEndpoint = config('guardian.client_errors.hub_ingest_endpoint', 'client-errors');
 
         try {
             if (config('guardian.hub.async', true)) {
-                SendToNightwatchClient::dispatch($ingestEndpoint, $data);
+                SendToNightwatchClient::dispatch($ingestEndpoint, $payload);
             } else {
-                $client->send($ingestEndpoint, $data);
+                $client->send($ingestEndpoint, $payload);
             }
         } catch (\Throwable) {
             // never break the page

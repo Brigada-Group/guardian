@@ -9,6 +9,7 @@ use Brigada\Guardian\Notifications\DiscordNotifier;
 use Brigada\Guardian\Results\CheckResult;
 use Brigada\Guardian\Support\CheckRegistry;
 use Brigada\Guardian\Support\Deduplicator;
+use Brigada\Guardian\Support\TraceContext;
 use Brigada\Guardian\Transport\NightwatchClient;
 use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Console\Command;
@@ -149,11 +150,13 @@ class RunChecksCommand extends Command
             ])->values()->all(),
         ];
 
+        $payload = $data + ['trace_id' => TraceContext::current()];
+
         try {
             if (config('guardian.hub.async', true)) {
-                SendToNightwatchClient::dispatch('health', $data);
+                SendToNightwatchClient::dispatch('health', $payload);
             } else {
-                app(NightwatchClient::class)->send('health', $data);
+                app(NightwatchClient::class)->send('health', $payload);
             }
         } catch (\Throwable) {
         }

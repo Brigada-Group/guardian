@@ -11,6 +11,10 @@ use Brigada\Guardian\Commands\StatusCommand;
 use Brigada\Guardian\Commands\TestCommand;
 use Brigada\Guardian\Exceptions\ExceptionNotifier;
 use Brigada\Guardian\Transport\NightwatchClient; 
+use Brigada\Guardian\Http\Middleware\StartTrace;
+use Brigada\Guardian\Support\TraceContext;
+use Illuminate\Contracts\Http\Kernel as HttpKernel;
+use Illuminate\Support\Facades\Http;
 use Brigada\Guardian\Listeners\CacheListener;
 use Brigada\Guardian\Listeners\CommandListener;
 use Brigada\Guardian\Listeners\JobListener;
@@ -106,6 +110,40 @@ class GuardianServiceProvider extends ServiceProvider
         
     }
 
+    private function registerTracing(): void 
+    {
+        
+        if (! config('guardian.tracing.enabled', true)) {
+            return;
+        }
+
+        if (! $this->app->runningInConsole()) {
+            $kernel = $this->app->make(HttpKernel::class);
+
+            if (method_exists($kernel, 'prependMiddleware')) {
+                $kernel->prependMiddleware(StartTrace::class);
+            }
+        }
+
+        if (config('guardian.tracing.propagate_outbound', false)) {
+            Http::globalRequestMiddleware(function ($request) {
+                $traceId = TraceContext::current();
+
+                if (! $traceId || $request->hasHeader('traceparent')) {
+                    return $request;
+                }
+
+                $parentId = bin2hex(random_bytes(8));
+
+                return $request->withHeader(
+                    'traceparent',
+                    "00-{$traceId}-{$parentId}-01"
+                );
+            });
+        }
+
+    }
+
     public function boot(): void
     {
         $this->publishes([
@@ -154,6 +192,7 @@ class GuardianServiceProvider extends ServiceProvider
                     $client->send('heartbeat',[
                         'php_version' => PHP_VERSION,
                         'laravel_version' => app()->version(),
+                        'trace_id' => TraceContext::current(),
                     ]);
                 }
             })->everyFiveMinutes();

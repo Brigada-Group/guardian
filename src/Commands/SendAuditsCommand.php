@@ -4,6 +4,7 @@ namespace Brigada\Guardian\Commands;
 
 use Brigada\Guardian\Audits\ComposerAuditReporter;
 use Brigada\Guardian\Audits\NpmAuditReporter;
+use Brigada\Guardian\Support\TraceContext;
 use Brigada\Guardian\Transport\NightwatchClient;
 use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Console\Command;
@@ -54,11 +55,13 @@ class SendAuditsCommand extends Command
 
     private function dispatch(string $endpoint, array $payload, bool $async): void
     {
+        $ingestPayload = $payload + ['trace_id' => TraceContext::current()];
+
         if ($async) {
-            SendToNightwatchClient::dispatch($endpoint, $payload);
+            SendToNightwatchClient::dispatch($endpoint, $ingestPayload);
             return;
         }
 
-        app(NightwatchClient::class)->send($endpoint, $payload);
+        app(NightwatchClient::class)->send($endpoint, $ingestPayload);
     }
 }
