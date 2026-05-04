@@ -9,8 +9,10 @@ use Brigada\Guardian\Commands\RunChecksCommand;
 use Brigada\Guardian\Commands\SendAuditsCommand;
 use Brigada\Guardian\Commands\StatusCommand;
 use Brigada\Guardian\Commands\TestCommand;
+use Brigada\Guardian\Commands\VerifyCommand;
 use Brigada\Guardian\Exceptions\ExceptionNotifier;
-use Brigada\Guardian\Transport\NightwatchClient; 
+use Brigada\Guardian\Transport\HeartbeatSender;
+use Brigada\Guardian\Transport\NightwatchClient;
 use Brigada\Guardian\Http\Middleware\StartTrace;
 use Brigada\Guardian\Support\TraceContext;
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
@@ -170,6 +172,7 @@ class GuardianServiceProvider extends ServiceProvider
                 InstallCommand::class,
                 PruneCommand::class,
                 SendAuditsCommand::class,
+                VerifyCommand::class,
             ]);
         }
 
@@ -184,17 +187,8 @@ class GuardianServiceProvider extends ServiceProvider
             $dailyTime = config('guardian.notifications.daily_summary_time', '06:00');
             $weeklyDay = $this->parseWeeklyDay(config('guardian.notifications.weekly_summary_day', 'monday'));
 
-            $schedule->call(function() {
-                $client = app(NightwatchClient::class);
-
-                if ($client->isConfigured())
-                {
-                    $client->send('heartbeat',[
-                        'php_version' => PHP_VERSION,
-                        'laravel_version' => app()->version(),
-                        'trace_id' => TraceContext::current(),
-                    ]);
-                }
+            $schedule->call(function () {
+                app(HeartbeatSender::class)->sendNow();
             })->everyFiveMinutes();
             
             $schedule->command('guardian:run every_5_min')->everyFiveMinutes();
