@@ -35,7 +35,16 @@ return [
 
     'client_errors' => [
         'enabled' => env('GUARDIAN_CLIENT_ERRORS_ENABLED', true),
+        // Auto-inject the <meta csrf-token> + <script> tags into every HTML
+        // response on the web group. Lets the SDK work zero-config — consumers
+        // don't need to edit their Blade layout or run vendor:publish.
+        'auto_inject' => env('GUARDIAN_CLIENT_ERRORS_AUTO_INJECT', true),
         'route' => 'guardian/client-errors',
+        // URL path the auto-injection middleware uses for the <script src>.
+        // Override with GUARDIAN_CLIENT_ERRORS_SCRIPT_URL if you want to serve
+        // the SDK from a CDN; null falls back to the built-in route below.
+        'script_url' => env('GUARDIAN_CLIENT_ERRORS_SCRIPT_URL'),
+        'script_route' => 'guardian/client.js',
         'middleware' => ['web', 'throttle:60,1'],
         'capture_console_error' => env('GUARDIAN_CLIENT_CAPTURE_CONSOLE_ERROR', false),
         'hub_ingest_endpoint' => env('GUARDIAN_CLIENT_ERRORS_HUB_INGEST_ENDPOINT', 'client-errors'),

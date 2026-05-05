@@ -13,6 +13,7 @@ use Brigada\Guardian\Commands\VerifyCommand;
 use Brigada\Guardian\Exceptions\ExceptionNotifier;
 use Brigada\Guardian\Transport\HeartbeatSender;
 use Brigada\Guardian\Transport\NightwatchClient;
+use Brigada\Guardian\Http\Middleware\InjectGuardianClient;
 use Brigada\Guardian\Http\Middleware\StartTrace;
 use Brigada\Guardian\Support\TraceContext;
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
@@ -160,8 +161,12 @@ class GuardianServiceProvider extends ServiceProvider
 
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
 
-        if (config('guardian.client_errors.enabled',true)) {
+        if (config('guardian.client_errors.enabled', true)) {
             $this->loadRoutesFrom(__DIR__ . '/Routes/guardian-client-errors.php');
+
+            if (config('guardian.client_errors.auto_inject', true)) {
+                $this->app['router']->pushMiddlewareToGroup('web', InjectGuardianClient::class);
+            }
         }
 
         if ($this->app->runningInConsole()) {

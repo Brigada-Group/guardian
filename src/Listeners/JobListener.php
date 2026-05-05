@@ -28,6 +28,13 @@ class JobListener
         $durationMs = $this->getDuration($event->job->getJobId());
         $jobClass = $this->resolveJobClass($event->job);
 
+        \Illuminate\Support\Facades\Log::debug('Guardian: JobListener.handleProcessed observed job', [
+            'resolved_job_class' => $jobClass,
+            'expected_skip_class' => SendToNightwatchClient::class,
+            'will_skip' => $jobClass === SendToNightwatchClient::class,
+            'guardian_internal' => true,
+        ]);
+
         // Don't report on our own hub-delivery jobs — every report would
         // spawn another report, infinitely amplifying queue load.
         if ($jobClass === SendToNightwatchClient::class) {
