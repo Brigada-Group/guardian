@@ -4,6 +4,7 @@ namespace Brigada\Guardian\Transport;
 
 use Brigada\Guardian\Support\TraceContext;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class HeartbeatSender
 {
@@ -37,12 +38,31 @@ class HeartbeatSender
     public function sendNow(): bool
     {
         if (! $this->client->isConfigured()) {
+            Log::warning('Guardian: heartbeat skipped — client not configured', [
+                'guardian_internal' => true,
+            ]);
+
             return false;
         }
 
         $payload = $this->buildPayload();
 
+        Log::info('Guardian: sending heartbeat', [
+            'has_verification_token' => isset($payload['verification_token']),
+            'guardian_internal' => true,
+        ]);
+
         $ok = $this->client->send('heartbeat', $payload);
+
+        if ($ok) {
+            Log::info('Guardian: heartbeat delivered', [
+                'guardian_internal' => true,
+            ]);
+        } else {
+            Log::warning('Guardian: heartbeat delivery failed', [
+                'guardian_internal' => true,
+            ]);
+        }
 
         // Only consume the cached token after a successful POST so a transient
         // hub outage doesn't burn the user's one-shot verification — the next

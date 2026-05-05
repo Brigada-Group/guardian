@@ -10,6 +10,7 @@ use Brigada\Guardian\Security\HeaderFilter;
 use Brigada\Guardian\Security\StackTraceSanitizer;
 use Brigada\Guardian\Support\TraceContext;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
 use Brigada\Guardian\Transport\NightwatchClient;
 use Brigada\Guardian\Transport\SendToNightwatchClient;
@@ -32,7 +33,19 @@ class ExceptionNotifier
 
     public function handle(\Throwable $e): void
     {
+        Log::info('Guardian: ExceptionNotifier received exception', [
+            'exception' => get_class($e),
+            'message' => mb_substr($e->getMessage(), 0, 200),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'guardian_internal' => true,
+        ]);
+
         if (! config('guardian.exceptions.enabled', true)) {
+            Log::debug('Guardian: exception reporting disabled in config', [
+                'guardian_internal' => true,
+            ]);
+
             return;
         }
 
@@ -40,6 +53,12 @@ class ExceptionNotifier
 
         foreach ($ignoredExceptions as $ignoredException) {
             if ($e instanceof $ignoredException) {
+                Log::debug('Guardian: exception ignored by config rule', [
+                    'exception' => get_class($e),
+                    'matched_rule' => $ignoredException,
+                    'guardian_internal' => true,
+                ]);
+
                 return;
             }
         }
@@ -47,6 +66,10 @@ class ExceptionNotifier
         $dedupKey = $this->dedupKey($e);
 
         if (! $this->shouldNotify($dedupKey)) {
+            Log::debug('Guardian: exception suppressed by dedup window', [
+                'dedup_key' => $dedupKey,
+                'guardian_internal' => true,
+            ]);
             $this->record($dedupKey, $e, false);
 
             return;
@@ -182,13 +205,27 @@ class ExceptionNotifier
 
         $payload = $data + ['trace_id' => TraceContext::current()];
 
+        $async = config('guardian.hub.async', true);
+
+        Log::info('Guardian: forwarding exception to Nightwatch hub', [
+            'exception' => get_class($e),
+            'mode' => $async ? 'async (queue)' : 'sync',
+            'guardian_internal' => true,
+        ]);
+
         try {
-            if (config('guardian.hub.async', true)) {
+            if ($async) {
                 SendToNightwatchClient::dispatch('exceptions', $payload);
             } else {
                 app(NightwatchClient::class)->send('exceptions', $payload);
             }
-        } catch (\Throwable) {
+        } catch (\Throwable $forwardError) {
+            Log::error('Guardian: failed to forward exception to hub', [
+                'exception' => get_class($e),
+                'forward_error_class' => get_class($forwardError),
+                'forward_error' => $forwardError->getMessage(),
+                'guardian_internal' => true,
+            ]);
         }
     }
 }

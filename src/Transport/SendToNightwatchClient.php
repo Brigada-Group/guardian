@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Facades\Log;
 
 class SendToNightwatchClient implements ShouldQueue
 {
@@ -30,6 +31,17 @@ class SendToNightwatchClient implements ShouldQueue
 
     public function handle(NightwatchClient $client): void
     {
-        $client->send($this->endpoint, $this->data);
+        Log::info('Guardian: SendToNightwatchClient job running', [
+            'endpoint' => $this->endpoint,
+            'attempt' => $this->attempts(),
+            'data_keys' => array_keys($this->data),
+            'guardian_internal' => true,
+        ]);
+
+        if (! $client->send($this->endpoint, $this->data)) {
+            throw new \RuntimeException(
+                "Guardian: Nightwatch hub rejected {$this->endpoint} delivery (see laravel.log for status code and body)"
+            );
+        }
     }
 }
