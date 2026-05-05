@@ -28,6 +28,12 @@ class JobListener
         $durationMs = $this->getDuration($event->job->getJobId());
         $jobClass = $this->resolveJobClass($event->job);
 
+        // Don't report on our own hub-delivery jobs — every report would
+        // spawn another report, infinitely amplifying queue load.
+        if ($jobClass === SendToNightwatchClient::class) {
+            return;
+        }
+
         try {
             $data = [
                 'job_class' => $jobClass,
@@ -66,6 +72,12 @@ class JobListener
         $durationMs = $this->getDuration($event->job->getJobId());
         $jobClass = $this->resolveJobClass($event->job);
         $errorMessage = $event->exception?->getMessage() ?? 'Unknown error';
+
+        // Don't report on our own hub-delivery jobs — would create a feedback
+        // loop where each failed delivery generates another delivery attempt.
+        if ($jobClass === SendToNightwatchClient::class) {
+            return;
+        }
 
         try {
             $data = [
