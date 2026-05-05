@@ -165,7 +165,19 @@ class GuardianServiceProvider extends ServiceProvider
             $this->loadRoutesFrom(__DIR__ . '/Routes/guardian-client-errors.php');
 
             if (config('guardian.client_errors.auto_inject', true)) {
-                $this->app['router']->pushMiddlewareToGroup('web', InjectGuardianClient::class);
+                // Register via afterResolving on the HTTP Kernel rather than
+                // pushing to the router during boot. In Laravel 11+, the
+                // bootstrap/app.php `withMiddleware` callback resolves the
+                // Kernel and calls setMiddlewareGroups(), which would wipe a
+                // router-level push made earlier in the lifecycle. Hooking
+                // afterResolving guarantees our append runs AFTER the kernel
+                // has finished applying its configured groups, and works
+                // unchanged on Laravel 10 too.
+                $this->app->afterResolving(HttpKernel::class, function (HttpKernel $kernel) {
+                    if (method_exists($kernel, 'appendMiddlewareToGroup')) {
+                        $kernel->appendMiddlewareToGroup('web', InjectGuardianClient::class);
+                    }
+                });
             }
         }
 
