@@ -14,25 +14,43 @@ class InjectGuardianClient
 
     public function handle(Request $request, Closure $next): Response
     {
+        \Log::info('[Guardian] InjectGuardianClient::handle reached', ['url' => $request->fullUrl()]);
+
         $response = $next($request);
 
         if (! $this->shouldInject($response)) {
+            \Log::info('[Guardian] shouldInject returned false', [
+                'response_class' => get_class($response),
+                'status' => $response->getStatusCode(),
+                'content_type' => $response->headers->get('Content-Type'),
+                'enabled' => config('guardian.client_errors.enabled', true),
+                'auto_inject' => config('guardian.client_errors.auto_inject', true),
+            ]);
             return $response;
         }
 
         $content = (string) $response->getContent();
 
         if ($content === '' || str_contains($content, self::SENTINEL)) {
+            \Log::info('[Guardian] bailed: content empty or already injected', [
+                'empty' => $content === '',
+                'has_sentinel' => str_contains($content, self::SENTINEL),
+            ]);
             return $response;
         }
 
         $injection = $this->buildInjection($content);
 
         if (str_contains($content, '</head>')) {
+            \Log::info('[Guardian] injecting before </head>');
             $injected = preg_replace('/<\/head>/i', $injection . '</head>', $content, 1);
         } elseif (str_contains($content, '</body>')) {
+            \Log::info('[Guardian] injecting before </body>');
             $injected = preg_replace('/<\/body>/i', $injection . '</body>', $content, 1);
         } else {
+            \Log::info('[Guardian] bailed: no </head> or </body> found', [
+                'content_preview' => mb_substr($content, 0, 200),
+            ]);
             return $response;
         }
 
