@@ -9,9 +9,12 @@ class DiscordNotifier
 {
     private static ?float $rateLimitResetAt = null;
 
-    public function __construct(
-        private readonly string $webhookUrl,
-    ) {}
+    private readonly string $webhookUrl;
+
+    public function __construct(?string $webhookUrl = null)
+    {
+        $this->webhookUrl = (string) ($webhookUrl ?? '');
+    }
 
     public function send(array $payload): bool
     {

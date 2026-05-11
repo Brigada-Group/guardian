@@ -16,9 +16,9 @@ class TestCommand extends Command
 
     public function handle(): int
     {
-        $webhookUrl = config('guardian.discord_webhook_url');
+        $webhookUrl = (string) (config('guardian.discord_webhook_url') ?? '');
 
-        if (empty($webhookUrl)) {
+        if ($webhookUrl === '') {
             $this->error('GUARDIAN_DISCORD_WEBHOOK is not set. Add it to your .env file.');
             return 1;
         }

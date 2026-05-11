@@ -31,10 +31,10 @@ class RunChecksCommand extends Command
             return 0;
         }
 
-        $webhookUrl = config('guardian.discord_webhook_url');
+        $webhookUrl = (string) (config('guardian.discord_webhook_url') ?? '');
         $projectName = config('guardian.project_name', config('app.name'));
 
-        $notifier = new DiscordNotifier($webhookUrl ?? '');
+        $notifier = new DiscordNotifier($webhookUrl);
         $messageBuilder = new DiscordMessageBuilder($projectName, $environment);
 
         if ($checkClass = $this->option('check')) {

@@ -38,6 +38,15 @@ class SendToNightwatchClient implements ShouldQueue
             'guardian_internal' => true,
         ]);
 
+        if (! $client->isConfigured()) {
+            Log::debug('Guardian: ingest job skipped — hub URL / project ID / token not set', [
+                'endpoint' => $this->endpoint,
+                'guardian_internal' => true,
+            ]);
+
+            return;
+        }
+
         if (! $client->send($this->endpoint, $this->data)) {
             throw new \RuntimeException(
                 "Guardian: Nightwatch hub rejected {$this->endpoint} delivery (see laravel.log for status code and body)"

@@ -24,7 +24,7 @@ class ExceptionNotifier
 
     public function __construct()
     {
-        $this->notifier = new DiscordNotifier(config('guardian.discord_webhook_url', ''));
+        $this->notifier = new DiscordNotifier((string) (config('guardian.discord_webhook_url') ?? ''));
         $this->builder = new DiscordMessageBuilder(
             config('guardian.project_name', 'Laravel'),
             config('guardian.environment', 'production'),

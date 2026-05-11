@@ -14,9 +14,9 @@ class NightwatchClient
 
     public function __construct()
     {
-        $this->baseUrl = rtrim(config('guardian.hub.url',''),'/');
-        $this->projectId = config('guardian.hub.project_id','');
-        $this->token = config('guardian.hub.api_token','');
+        $this->baseUrl = rtrim((string) config('guardian.hub.url', ''), '/');
+        $this->projectId = (string) config('guardian.hub.project_id', '');
+        $this->token = (string) config('guardian.hub.api_token', '');
     }
 
     public function isConfigured(): bool 

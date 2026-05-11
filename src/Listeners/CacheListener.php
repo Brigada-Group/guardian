@@ -105,9 +105,4 @@ class CacheListener
 
         self::$counters = [];
     }
-
-    public function __destruct()
-    {
-        $this->flush();
-    }
 }

@@ -3,7 +3,7 @@
 return [
     'project_name' => env('GUARDIAN_PROJECT_NAME', env('APP_NAME', 'Laravel')),
     'environment' => env('GUARDIAN_ENVIRONMENT', env('APP_ENV', 'production')),
-    'discord_webhook_url' => env('GUARDIAN_DISCORD_WEBHOOK'),
+    'discord_webhook_url' => (string) env('GUARDIAN_DISCORD_WEBHOOK', ''),
     'enabled_environments' => ['production'],
     'disabled_checks' => [],
     'thresholds' => [

@@ -35,7 +35,7 @@ trait SendsDiscordAlerts
             return;
         }
 
-        $webhookUrl = config('guardian.discord_webhook_url', '');
+        $webhookUrl = (string) (config('guardian.discord_webhook_url') ?? '');
         $projectName = config('guardian.project_name', 'Laravel');
         $environment = config('guardian.environment', 'production');
 

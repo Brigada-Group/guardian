@@ -23,6 +23,14 @@ class QueryListener
 
     public function handle(QueryExecuted $event): void
     {
+        if ($this->isGuardianPackageSql($event->sql)) {
+            return;
+        }
+
+        if ($this->isInvokedFromMigrationOrSchemaPipeline()) {
+            return;
+        }
+
         $durationMs = $event->time;
         $slowThreshold = config('guardian.monitoring.queries.slow_threshold_ms', 500);
         $isSlow = $durationMs >= $slowThreshold;
@@ -162,5 +170,39 @@ class QueryListener
         }
 
         return [];
+    }
+
+    
+    private function isGuardianPackageSql(string $sql): bool
+    {
+        if (preg_match('/`guardian_[a-z0-9_]+`/i', $sql) === 1) {
+            return true;
+        }
+
+        return preg_match('/\b(?:insert\s+into|replace\s+into|delete\s+from|update)\s+guardian_\w+/i', $sql) === 1
+            || preg_match('/\b(?:from|join)\s+guardian_\w+\b/i', $sql) === 1
+            || preg_match('/\b(?:from|join)\s+"guardian_[a-z0-9_]+"/i', $sql) === 1;
+    }
+
+    
+    private function isInvokedFromMigrationOrSchemaPipeline(): bool
+    {
+        foreach (debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 25) as $frame) {
+            $class = $frame['class'] ?? '';
+
+            if ($class === '') {
+                continue;
+            }
+
+            if (
+                str_starts_with($class, 'Illuminate\\Database\\Migrations\\')
+                || str_starts_with($class, 'Illuminate\\Database\\Console\\Migrations\\')
+                || str_starts_with($class, 'Illuminate\\Database\\Schema\\')
+            ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

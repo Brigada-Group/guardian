@@ -196,6 +196,7 @@ class GuardianServiceProvider extends ServiceProvider
         $this->registerSchedule();
         $this->registerExceptionHandler();
         $this->registerEventListeners();
+        $this->registerCacheAggregatorTerminatingFlush();
     }
 
     private function registerSchedule(): void
@@ -288,6 +289,27 @@ class GuardianServiceProvider extends ServiceProvider
         }
     }
 
+    
+    private function registerCacheAggregatorTerminatingFlush(): void
+    {
+        if (! config('guardian.monitoring.cache.enabled', true)) {
+            return;
+        }
+
+        $app = $this->app;
+
+        $app->terminating(static function () use ($app): void {
+            try {
+                if (! $app->isBooted()) {
+                    return;
+                }
+
+                $app->make(CacheListener::class)->flush();
+            } catch (\Throwable) {
+                // PHPUnit teardown, graceful shutdown with a partial container, etc.
+            }
+        });
+    }
 
 
     private function parseWeeklyDay(string $day): int
