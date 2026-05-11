@@ -5,6 +5,7 @@ namespace Brigada\Guardian;
 use Brigada\Guardian\Checks;
 use Brigada\Guardian\Commands\InstallCommand;
 use Brigada\Guardian\Commands\PruneCommand;
+use Brigada\Guardian\Commands\PurgeGuardianQueueJobsCommand;
 use Brigada\Guardian\Commands\RunChecksCommand;
 use Brigada\Guardian\Commands\SendAuditsCommand;
 use Brigada\Guardian\Commands\StatusCommand;
@@ -188,6 +189,7 @@ class GuardianServiceProvider extends ServiceProvider
                 TestCommand::class,
                 InstallCommand::class,
                 PruneCommand::class,
+                PurgeGuardianQueueJobsCommand::class,
                 SendAuditsCommand::class,
                 VerifyCommand::class,
             ]);

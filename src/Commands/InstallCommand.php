@@ -54,6 +54,13 @@ class InstallCommand extends Command
         $this->line('  GUARDIAN_ENVIRONMENT=' . config('app.env'));
 
         $this->newLine();
+        $this->warn(
+            'Before removing this package: pause queue workers, run `php artisan guardian:purge-queue-jobs`, then `composer remove brigada/guardian`. '
+                .'Skipping this leaves serialized SendToNightwatchClient jobs in Redis/DB — workers will spam PHP_Incomplete_Class errors after the class is gone. '
+                .'If you use Redis queues, you may also need `php artisan queue:clear` for that connection.',
+        );
+
+        $this->newLine();
         $this->line('Nightwatch Hub (centralized dashboard):');
         $this->line('  GUARDIAN_HUB_URL=https://your-hub-domain.com');
         $this->line('  GUARDIAN_HUB_PROJECT_ID=your-project-uuid');
