@@ -8,8 +8,8 @@ Private Laravel monitoring package. Runs security audits, health checks, and rea
 
 - PHP ^8.2
 - Laravel ^11.0 or ^12.0
-- Discord webhook URL
-- Membership in the [Brigada-Group](https://github.com/Brigada-Group) GitHub organization
+- A [Discord](https://discord.com) incoming webhook **if** you want Discord alerts (`GUARDIAN_DISCORD_WEBHOOK` can be omitted if you only use other channels; see below)
+- Membership in the [Brigada-Group](https://github.com/Brigada-Group) GitHub organization (for the private package)
 
 ## Team Access Setup
 
@@ -39,9 +39,11 @@ composer config --global github-oauth.github.com ghp_YOUR_TOKEN
 
 > **Note:** Use `--global` so the token works across all projects on your machine. Never commit tokens to version control.
 
-## Installation
+## Installation & configuration (step by step)
 
-Add the private repository to your project's `composer.json`:
+### 1. Add the private Composer repository
+
+In your Laravel app’s root `composer.json`, add the VCS repository (org access + token must be set up as in [Team Access Setup](#team-access-setup) below):
 
 ```json
 {
@@ -54,26 +56,111 @@ Add the private repository to your project's `composer.json`:
 }
 ```
 
-Install the package:
+### 2. Require the package
 
 ```bash
 composer require brigada/guardian
+```
+
+### 3. Run the install command
+
+This **publishes** `config/guardian.php`, publishes the client-error asset tag, and runs **migrations** for Guardian tables:
+
+```bash
 php artisan guardian:install
 ```
 
-Add to your `.env`:
+You can **publish only the config** later (or on another environment) with:
 
-```
-GUARDIAN_DISCORD_WEBHOOK=https://discord.com/api/webhooks/xxx/yyy
-GUARDIAN_PROJECT_NAME="Your Project Name"
-GUARDIAN_ENVIRONMENT=production
+```bash
+php artisan vendor:publish --tag=guardian-config
 ```
 
-Verify it works:
+### 4. Finish `.env` (and optional `config/guardian.php`)
+
+After publishing, merge the following into your `.env` as needed. Anything optional can be skipped.
+
+| Variable | Required? | Purpose |
+|----------|-----------|---------|
+| `GUARDIAN_DISCORD_WEBHOOK` | Optional | Discord incoming webhook URL. If unset, Discord alerts are skipped (no crash). |
+| `GUARDIAN_PROJECT_NAME` | Optional | Defaults to `APP_NAME`. |
+| `GUARDIAN_ENVIRONMENT` | Optional | Defaults to `APP_ENV`; used for alerting and Hub payloads. |
+| `GUARDIAN_HUB_URL` | For Nightwatch Hub | Base URL of your hub (no `/api/ingest/...` suffix). |
+| `GUARDIAN_HUB_PROJECT_ID` | For Nightwatch Hub | Project id from the Hub. |
+| `GUARDIAN_HUB_API_TOKEN` | For Nightwatch Hub | Bearer token the Hub accepts for ingest. |
+
+Tuning (thresholds, disabled checks, monitoring categories, `hub.async`, etc.) lives in **`config/guardian.php`**. Run `php artisan config:clear` after editing `.env`, and `php artisan config:cache` in production if you cache config.
+
+**Environment gating:** by default `guardian.enabled_environments` only includes `production`. Local/staging apps should set `GUARDIAN_ENVIRONMENT=production` **or** add `'local'` / `'staging'` to `enabled_environments` in the published config, or many features (including audits) will no-op.
+
+### 5. Scheduler (cron)
+
+Guardian registers tasks on Laravel’s schedule (health checks, heartbeat, `guardian:audits`, etc.). Your server **must** invoke the scheduler every minute:
+
+```cron
+* * * * * cd /path-to-your-app && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Check that jobs are listed:
+
+```bash
+php artisan schedule:list
+```
+
+### 6. Queue workers (if you use Hub ingest or `hub.async`)
+
+When `config('guardian.hub.async')` is `true` (default), Nightwatch ingest payloads are sent via **`SendToNightwatchClient`** jobs on the configured queue (default: `default`). You **must** run a worker that processes that queue, for example:
+
+```bash
+php artisan queue:work --queue=default
+```
+
+(or Horizon / Supervisor equivalent). Without a worker, audits and other ingest events will pile up in Redis/DB and never reach the Hub.
+
+### 7. Verify
 
 ```bash
 php artisan guardian:test
 ```
+
+(requires `GUARDIAN_DISCORD_WEBHOOK` to be set).
+
+For Hub connectivity, use your Hub logs or temporarily set `QUEUE_CONNECTION=sync` locally to see HTTP errors inline when running `php artisan guardian:audits`.
+
+---
+
+## Removing Guardian
+
+Queued jobs are serialized with the PHP class `Brigada\Guardian\Transport\SendToNightwatchClient`. If you run **`composer remove brigada/guardian`** while those jobs are still pending, workers will throw **`Job is incomplete class` / `PHP_Incomplete_Class`** and may retry until the queue is clean.
+
+**Recommended order:**
+
+1. **Stop** queue workers (Supervisor, Horizon, etc.).
+2. **Purge Guardian jobs** while the package is still installed:
+
+   ```bash
+   php artisan guardian:purge-queue-jobs
+   ```
+
+   Use `php artisan guardian:purge-queue-jobs --dry-run` first to see what would be deleted. This command cleans the **database** `jobs` table when your default queue driver is `database`, and prunes matching rows from **`failed_jobs`** when Laravel stores failures in the database.
+
+3. **Redis (or other non-database queues):** `guardian:purge-queue-jobs` cannot delete Guardian jobs selectively from Redis. If your default connection is Redis, **clear that queue** (after pausing workers), e.g.:
+
+   ```bash
+   php artisan queue:clear redis --queue=default
+   ```
+
+   Replace `redis` and queue name with your connection/queue. Clearing removes **all** jobs on that queue, not only Guardian’s.
+
+4. **Remove the package:**
+
+   ```bash
+   composer remove brigada/guardian
+   ```
+
+5. **Optional:** Remove published `config/guardian.php` and any migrations you no longer want (Guardian’s migrations may have already created `guardian_*` tables—you can drop them manually if you are decommissioning monitoring).
+
+The `guardian:install` command also prints this removal reminder on first setup.
 
 ## What It Monitors
 
@@ -239,8 +326,12 @@ Guardian validates that the configured webhook URL points to a Discord domain (`
 ## Commands
 
 ```bash
-php artisan guardian:install                     # One-liner setup (config + migrations)
+php artisan guardian:install                     # Publish config & assets + run migrations
 php artisan guardian:test                        # Send test notification to Discord
+php artisan guardian:purge-queue-jobs            # Strip Guardian ingest jobs from DB queue/failed_jobs (before composer remove)
+php artisan guardian:purge-queue-jobs --dry-run # Preview deletes only
+php artisan guardian:audits                      # Composer + npm audit → Nightwatch ingest (scheduled daily too)
+php artisan guardian:verify TOKEN                # Nightwatch verification flow
 php artisan guardian:run hourly                   # Run hourly checks
 php artisan guardian:run daily                    # Run daily checks
 php artisan guardian:run --check=DiskSpaceCheck   # Run a single check
