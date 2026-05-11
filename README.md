@@ -2,7 +2,7 @@
 
 Private Laravel monitoring package. Runs security audits, health checks, and real-time event monitoring. Reports everything to Discord — with a built-in web dashboard.
 
-**Think of it as Nightwatch for Laravel** — but self-hosted, Discord-native, and with a full monitoring dashboard.
+**Full observability for Laravel** — self-hosted, Discord-native, and with a built-in monitoring dashboard.
 
 ## Requirements
 
@@ -85,9 +85,9 @@ After publishing, merge the following into your `.env` as needed. Anything optio
 | `GUARDIAN_DISCORD_WEBHOOK` | Optional | Discord incoming webhook URL. If unset, Discord alerts are skipped (no crash). |
 | `GUARDIAN_PROJECT_NAME` | Optional | Defaults to `APP_NAME`. |
 | `GUARDIAN_ENVIRONMENT` | Optional | Defaults to `APP_ENV`; used for alerting and Hub payloads. |
-| `GUARDIAN_HUB_URL` | For Nightwatch Hub | Base URL of your hub (no `/api/ingest/...` suffix). |
-| `GUARDIAN_HUB_PROJECT_ID` | For Nightwatch Hub | Project id from the Hub. |
-| `GUARDIAN_HUB_API_TOKEN` | For Nightwatch Hub | Bearer token the Hub accepts for ingest. |
+| `GUARDIAN_HUB_URL` | For Guardian Hub | Base URL of your hub (no `/api/ingest/...` suffix). |
+| `GUARDIAN_HUB_PROJECT_ID` | For Guardian Hub | Project id from the Hub. |
+| `GUARDIAN_HUB_API_TOKEN` | For Guardian Hub | Bearer token the Hub accepts for ingest. |
 
 Tuning (thresholds, disabled checks, monitoring categories, `hub.async`, etc.) lives in **`config/guardian.php`**. Run `php artisan config:clear` after editing `.env`, and `php artisan config:cache` in production if you cache config.
 
@@ -109,7 +109,7 @@ php artisan schedule:list
 
 ### 6. Queue workers (if you use Hub ingest or `hub.async`)
 
-When `config('guardian.hub.async')` is `true` (default), Nightwatch ingest payloads are sent via **`SendToNightwatchClient`** jobs on the configured queue (default: `default`). You **must** run a worker that processes that queue, for example:
+When `config('guardian.hub.async')` is `true` (default), Guardian forwards hub ingest payloads as **queued Laravel jobs** on the queue from `config('guardian.hub.queue')` (default: `default`). You **must** run a worker that processes that queue, for example:
 
 ```bash
 php artisan queue:work --queue=default
@@ -131,7 +131,7 @@ For Hub connectivity, use your Hub logs or temporarily set `QUEUE_CONNECTION=syn
 
 ## Removing Guardian
 
-Queued jobs are serialized with the PHP class `Brigada\Guardian\Transport\SendToNightwatchClient`. If you run **`composer remove brigada/guardian`** while those jobs are still pending, workers will throw **`Job is incomplete class` / `PHP_Incomplete_Class`** and may retry until the queue is clean.
+Queued hub-ingest payloads are serialized using PHP classes from this package under `Brigada\Guardian\Transport`. If you run **`composer remove brigada/guardian`** while those jobs are still pending, workers may throw **`Job is incomplete class` / `PHP_Incomplete_Class`** and retry until the queue is clean — use `guardian:purge-queue-jobs` first (see below).
 
 **Recommended order:**
 
@@ -330,8 +330,8 @@ php artisan guardian:install                     # Publish config & assets + run
 php artisan guardian:test                        # Send test notification to Discord
 php artisan guardian:purge-queue-jobs            # Strip Guardian ingest jobs from DB queue/failed_jobs (before composer remove)
 php artisan guardian:purge-queue-jobs --dry-run # Preview deletes only
-php artisan guardian:audits                      # Composer + npm audit → Nightwatch ingest (scheduled daily too)
-php artisan guardian:verify TOKEN                # Nightwatch verification flow
+php artisan guardian:audits                      # Composer + npm audit → Guardian Hub ingest (scheduled daily too)
+php artisan guardian:verify TOKEN                # Guardian Hub connection verification flow
 php artisan guardian:run hourly                   # Run hourly checks
 php artisan guardian:run daily                    # Run daily checks
 php artisan guardian:run --check=DiskSpaceCheck   # Run a single check
