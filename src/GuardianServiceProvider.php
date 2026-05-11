@@ -8,6 +8,7 @@ use Brigada\Guardian\Commands\PruneCommand;
 use Brigada\Guardian\Commands\PurgeGuardianQueueJobsCommand;
 use Brigada\Guardian\Commands\RunChecksCommand;
 use Brigada\Guardian\Commands\SendAuditsCommand;
+use Brigada\Guardian\Commands\SyncLogSnapshotsCommand;
 use Brigada\Guardian\Commands\StatusCommand;
 use Brigada\Guardian\Commands\TestCommand;
 use Brigada\Guardian\Commands\VerifyCommand;
@@ -191,6 +192,7 @@ class GuardianServiceProvider extends ServiceProvider
                 PruneCommand::class,
                 PurgeGuardianQueueJobsCommand::class,
                 SendAuditsCommand::class,
+                SyncLogSnapshotsCommand::class,
                 VerifyCommand::class,
             ]);
         }
@@ -216,6 +218,11 @@ class GuardianServiceProvider extends ServiceProvider
             $schedule->command('guardian:run daily')->dailyAt($dailyTime);
             $schedule->command('guardian:run weekly')->weeklyOn($weeklyDay, '07:00');
             $schedule->command('guardian:audits')->dailyAt(config('guardian.audits.time', '03:00'));
+
+            if (config('guardian.log_file_snapshots.enabled', false)) {
+                $schedule->command('guardian:sync-log-snapshots')
+                    ->dailyAt(config('guardian.log_file_snapshots.schedule_at', '04:05'));
+            }
         });
     }
 

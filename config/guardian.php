@@ -208,6 +208,27 @@ return [
         'time' => env('GUARDIAN_AUDITS_TIME', '03:00'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Log file snapshots → Hub (storage/logs only)
+    |--------------------------------------------------------------------------
+    |
+    | Tails Laravel log files derived from config/logging.php channels (single,
+    | daily, stack). Ingest POSTs synchronously so byte cursors advance only after
+    | a successful hub response. Enable with GUARDIAN_LOG_SNAPSHOTS=true or set
+    | enabled => true below. Tune channels, max_bytes, and schedule here — no extra
+    | .env noise required.
+    |
+    */
+
+    'log_file_snapshots' => [
+        'enabled' => env('GUARDIAN_LOG_SNAPSHOTS', false),
+        'channels' => ['stack'],
+        'max_bytes' => 524_288,
+        'initial_tail_only' => true,
+        'schedule_at' => '04:05',
+    ],
+
       /*
     |--------------------------------------------------------------------------
     | Distributed Tracing
