@@ -10,8 +10,8 @@ use Brigada\Guardian\Results\CheckResult;
 use Brigada\Guardian\Support\CheckRegistry;
 use Brigada\Guardian\Support\Deduplicator;
 use Brigada\Guardian\Support\TraceContext;
+use Brigada\Guardian\Dispatcher\SendsToNightwatch;
 use Brigada\Guardian\Transport\NightwatchClient;
-use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Console\Command;
 
 class RunChecksCommand extends Command
@@ -154,7 +154,7 @@ class RunChecksCommand extends Command
 
         try {
             if (config('guardian.hub.async', true)) {
-                SendToNightwatchClient::dispatch('health', $payload);
+                app(SendsToNightwatch::class)->sendIngest('health', $payload);
             } else {
                 app(NightwatchClient::class)->send('health', $payload);
             }

@@ -8,12 +8,11 @@ use Brigada\Guardian\Notifications\DiscordMessageBuilder;
 use Brigada\Guardian\Notifications\DiscordNotifier;
 use Brigada\Guardian\Security\HeaderFilter;
 use Brigada\Guardian\Security\StackTraceSanitizer;
+use Brigada\Guardian\Dispatcher\SendsToNightwatch;
 use Brigada\Guardian\Support\TraceContext;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
 use Brigada\Guardian\Transport\NightwatchClient;
-use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class ExceptionNotifier
@@ -215,7 +214,7 @@ class ExceptionNotifier
 
         try {
             if ($async) {
-                SendToNightwatchClient::dispatch('exceptions', $payload);
+                app(SendsToNightwatch::class)->sendIngest('exceptions', $payload);
             } else {
                 app(NightwatchClient::class)->send('exceptions', $payload);
             }

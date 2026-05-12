@@ -20,6 +20,7 @@ use Brigada\Guardian\Http\Middleware\StartTrace;
 use Brigada\Guardian\Support\TraceContext;
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Illuminate\Support\Facades\Http;
+use Brigada\Guardian\Dispatcher\SendsToNightwatch;
 use Brigada\Guardian\Listeners\CacheListener;
 use Brigada\Guardian\Listeners\CommandListener;
 use Brigada\Guardian\Listeners\JobListener;
@@ -54,6 +55,7 @@ use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Notifications\Events\NotificationFailed;
 use Illuminate\Notifications\Events\NotificationSent;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 
 
@@ -110,9 +112,26 @@ class GuardianServiceProvider extends ServiceProvider
 
         $this->app->singleton(NightwatchClient::class);
 
+        $this->app->singleton(SendsToNightwatch::class);
+
         $this->app->singleton(CacheListener::class);
 
-        
+
+    }
+
+    private function normalizeGuardianDispatchConfig(): void
+    {
+        $raw = strtolower(trim((string) config('guardian.dispatch_mode', 'worker')));
+
+        if (! in_array($raw, ['worker', 'sync'], true)) {
+            Log::warning('Guardian: invalid guardian.dispatch_mode "' . config('guardian.dispatch_mode') . "\" — expected worker or sync; using worker.", [
+                'guardian_internal' => true,
+            ]);
+            $raw = 'worker';
+            config(['guardian.dispatch_mode' => 'worker']);
+        } else {
+            config(['guardian.dispatch_mode' => $raw]);
+        }
     }
 
     private function registerTracing(): void 
@@ -151,6 +170,10 @@ class GuardianServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->normalizeGuardianDispatchConfig();
+
+        $this->registerTracing();
+
         $this->publishes([
             __DIR__ . '/../config/guardian.php' => config_path('guardian.php'),
         ], 'guardian-config');

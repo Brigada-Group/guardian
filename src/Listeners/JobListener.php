@@ -4,8 +4,9 @@ namespace Brigada\Guardian\Listeners;
 
 use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
-use Brigada\Guardian\Transport\NightwatchClient;
+use Brigada\Guardian\Dispatcher\SendsToNightwatch;
 use Brigada\Guardian\Support\TraceContext;
+use Brigada\Guardian\Transport\NightwatchClient;
 use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
@@ -54,7 +55,7 @@ class JobListener
             ];
 
             if (config('guardian.hub.async', true)) {
-                SendToNightwatchClient::dispatch('jobs', $data);
+                app(SendsToNightwatch::class)->sendIngest('jobs', $data);
             } else {
                 app(NightwatchClient::class)->send('jobs', $data);
             }
@@ -105,7 +106,7 @@ class JobListener
             ];
 
             if (config('guardian.hub.async', true)) {
-                SendToNightwatchClient::dispatch('jobs', $data);
+                app(SendsToNightwatch::class)->sendIngest('jobs', $data);
             } else {
                 app(NightwatchClient::class)->send('jobs', $data);
             }

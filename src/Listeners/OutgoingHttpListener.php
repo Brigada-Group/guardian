@@ -5,9 +5,9 @@ namespace Brigada\Guardian\Listeners;
 use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
 use Brigada\Guardian\Models\OutgoingHttpLog;
-use Brigada\Guardian\Transport\NightwatchClient;
+use Brigada\Guardian\Dispatcher\SendsToNightwatch;
 use Brigada\Guardian\Support\TraceContext;
-use Brigada\Guardian\Transport\SendToNightwatchClient;
+use Brigada\Guardian\Transport\NightwatchClient;
 use Illuminate\Http\Client\Events\ConnectionFailed;
 use Illuminate\Http\Client\Events\ResponseReceived;
 
@@ -47,7 +47,7 @@ class OutgoingHttpListener
             $payload = $data + ['trace_id' => TraceContext::current()];
 
             if (config('guardian.hub.async', true)) {
-                SendToNightwatchClient::dispatch('outgoing-http', $payload);
+                app(SendsToNightwatch::class)->sendIngest('outgoing-http', $payload);
             } else {
                 app(NightwatchClient::class)->send('outgoing-http', $payload);
             }
@@ -101,7 +101,7 @@ class OutgoingHttpListener
             $payload = $data + ['trace_id' => TraceContext::current()];
 
             if (config('guardian.hub.async', true)) {
-                SendToNightwatchClient::dispatch('outgoing-http', $payload);
+                app(SendsToNightwatch::class)->sendIngest('outgoing-http', $payload);
             } else {
                 app(NightwatchClient::class)->send('outgoing-http', $payload);
             }

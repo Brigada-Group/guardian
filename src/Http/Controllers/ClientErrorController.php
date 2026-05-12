@@ -3,10 +3,10 @@
 namespace Brigada\Guardian\Http\Controllers;
 
 use Brigada\Guardian\Security\StackTraceSanitizer;
+use Brigada\Guardian\Dispatcher\SendsToNightwatch;
 use Brigada\Guardian\Support\NightwatchUserPayload;
 use Brigada\Guardian\Support\TraceContext;
 use Brigada\Guardian\Transport\NightwatchClient;
-use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -73,7 +73,7 @@ class ClientErrorController extends Controller
 
         try {
             if (config('guardian.hub.async', true)) {
-                SendToNightwatchClient::dispatch($ingestEndpoint, $payload);
+                app(SendsToNightwatch::class)->sendIngest($ingestEndpoint, $payload);
             } else {
                 $client->send($ingestEndpoint, $payload);
             }
