@@ -6,8 +6,8 @@ use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
 use Brigada\Guardian\Security\StackTraceSanitizer;
 use Brigada\Guardian\Support\TraceContext;
+use Brigada\Guardian\Dispatcher\SendsToNightwatch;
 use Brigada\Guardian\Transport\NightwatchClient;
-use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Log\Events\MessageLogged;
 
 class LogListener
@@ -46,7 +46,7 @@ class LogListener
             $payload = $data + ['trace_id' => TraceContext::current()];
 
             if (config('guardian.hub.async', true)) {
-                SendToNightwatchClient::dispatch('logs', $payload);
+                app(SendsToNightwatch::class)->sendIngest('logs', $payload);
             } else {
                 app(NightwatchClient::class)->send('logs', $payload);
             }

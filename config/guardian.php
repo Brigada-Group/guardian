@@ -195,6 +195,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hub ingest job dispatch (SendToNightwatchClient)
+    |--------------------------------------------------------------------------
+    |
+    | worker — use your app's default queue connection (Redis, database…); requires
+    |          queue:work / Horizon.
+    | sync   — Laravel's sync connection runs the job immediately in-process (no worker).
+    |
+    | Set GUARDIAN_DISPATCH_MODE=sync when workers are unavailable.
+    |
+    */
+
+    'dispatch_mode' => env('GUARDIAN_DISPATCH_MODE', 'worker'),
+    /** When dispatch_mode is worker: override queue connection; null / empty = app default */
+    'queue_connection' => env('GUARDIAN_QUEUE_CONNECTION'),
+    /** Deferred until after HTTP response (only honored when dispatch_mode is sync). */
+    'dispatch_after_response' => filter_var(
+        env('GUARDIAN_DISPATCH_AFTER_RESPONSE', false),
+        FILTER_VALIDATE_BOOLEAN
+    ),
+
+    /*
+    |--------------------------------------------------------------------------
     | Audits (composer audit + npm audit)
     |--------------------------------------------------------------------------
     |

@@ -6,9 +6,9 @@ use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
 use Brigada\Guardian\Models\RequestLog;
 use Brigada\Guardian\Support\IpAnonymizer;
-use Brigada\Guardian\Transport\NightwatchClient;
+use Brigada\Guardian\Dispatcher\SendsToNightwatch;
 use Brigada\Guardian\Support\TraceContext;
-use Brigada\Guardian\Transport\SendToNightwatchClient;
+use Brigada\Guardian\Transport\NightwatchClient;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -53,7 +53,7 @@ class RequestMonitor
             $payload = $data + ['trace_id' => TraceContext::current()];
 
             if (config('guardian.hub.async', true)) {
-                SendToNightwatchClient::dispatch('requests', $payload);
+                app(SendsToNightwatch::class)->sendIngest('requests', $payload);
             } else {
                 app(NightwatchClient::class)->send('requests', $payload);
             }

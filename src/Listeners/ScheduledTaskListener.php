@@ -6,8 +6,8 @@ use Brigada\Guardian\Enums\Status;
 use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
 use Brigada\Guardian\Models\ScheduledTaskLog;
 use Brigada\Guardian\Support\TraceContext;
+use Brigada\Guardian\Dispatcher\SendsToNightwatch;
 use Brigada\Guardian\Transport\NightwatchClient;
-use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Console\Events\ScheduledTaskFailed;
 use Illuminate\Console\Events\ScheduledTaskFinished;
 use Illuminate\Console\Events\ScheduledTaskSkipped;
@@ -50,7 +50,7 @@ class ScheduledTaskListener
             $payload = $data + ['trace_id' => TraceContext::current()];
 
             if (config('guardian.hub.async', true)) {
-                SendToNightwatchClient::dispatch('scheduled-tasks', $payload);
+                app(SendsToNightwatch::class)->sendIngest('scheduled-tasks', $payload);
             } else {
                 app(NightwatchClient::class)->send('scheduled-tasks', $payload);
             }
@@ -95,7 +95,7 @@ class ScheduledTaskListener
             $payload = $data + ['trace_id' => TraceContext::current()];
 
             if (config('guardian.hub.async', true)) {
-                SendToNightwatchClient::dispatch('scheduled-tasks', $payload);
+                app(SendsToNightwatch::class)->sendIngest('scheduled-tasks', $payload);
             } else {
                 app(NightwatchClient::class)->send('scheduled-tasks', $payload);
             }
@@ -130,7 +130,7 @@ class ScheduledTaskListener
             $payload = $data + ['trace_id' => TraceContext::current()];
 
             if (config('guardian.hub.async', true)) {
-                SendToNightwatchClient::dispatch('scheduled-tasks', $payload);
+                app(SendsToNightwatch::class)->sendIngest('scheduled-tasks', $payload);
             } else {
                 app(NightwatchClient::class)->send('scheduled-tasks', $payload);
             }

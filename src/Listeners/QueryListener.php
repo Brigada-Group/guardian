@@ -7,8 +7,8 @@ use Brigada\Guardian\Listeners\Concerns\SendsDiscordAlerts;
 use Brigada\Guardian\Models\QueryLog;
 use Brigada\Guardian\Support\TraceContext;
 use Brigada\Guardian\Security\QuerySanitizer;
+use Brigada\Guardian\Dispatcher\SendsToNightwatch;
 use Brigada\Guardian\Transport\NightwatchClient;
-use Brigada\Guardian\Transport\SendToNightwatchClient;
 use Illuminate\Database\Events\QueryExecuted;
 
 class QueryListener
@@ -77,7 +77,7 @@ class QueryListener
             $payload = $data + ['trace_id' => TraceContext::current()];
 
             if (config('guardian.hub.async', true)) {
-                SendToNightwatchClient::dispatch('queries', $payload);
+                app(SendsToNightwatch::class)->sendIngest('queries', $payload);
             } else {
                 app(NightwatchClient::class)->send('queries', $payload);
             }
