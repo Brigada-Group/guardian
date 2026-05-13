@@ -10,12 +10,12 @@ use Brigada\Guardian\Commands\RunChecksCommand;
 use Brigada\Guardian\Commands\SendAuditsCommand;
 use Brigada\Guardian\Commands\SyncLogSnapshotsCommand;
 use Brigada\Guardian\Commands\StatusCommand;
-use Brigada\Guardian\Commands\TestCommand;
 use Brigada\Guardian\Commands\VerifyCommand;
 use Brigada\Guardian\Exceptions\ExceptionNotifier;
 use Brigada\Guardian\Transport\HeartbeatSender;
 use Brigada\Guardian\Transport\NightwatchClient;
 use Brigada\Guardian\Http\Middleware\InjectGuardianClient;
+use Brigada\Guardian\Http\Middleware\RequestMonitor;
 use Brigada\Guardian\Http\Middleware\StartTrace;
 use Brigada\Guardian\Support\TraceContext;
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
@@ -190,27 +190,25 @@ class GuardianServiceProvider extends ServiceProvider
             $this->loadRoutesFrom(__DIR__ . '/Routes/guardian-client-errors.php');
 
             if (config('guardian.client_errors.auto_inject', true)) {
-                // Register via afterResolving on the HTTP Kernel rather than
-                // pushing to the router during boot. In Laravel 11+, the
-                // bootstrap/app.php `withMiddleware` callback resolves the
-                // Kernel and calls setMiddlewareGroups(), which would wipe a
-                // router-level push made earlier in the lifecycle. Hooking
-                // afterResolving guarantees our append runs AFTER the kernel
-                // has finished applying its configured groups, and works
-                // unchanged on Laravel 10 too.
-                $this->app->afterResolving(HttpKernel::class, function (HttpKernel $kernel) {
-                    if (method_exists($kernel, 'appendMiddlewareToGroup')) {
-                        $kernel->appendMiddlewareToGroup('web', InjectGuardianClient::class);
-                    }
-                });
+                // bootstrap/app.php's `withMiddleware` callback resolves the kernel
+                // and calls setMiddlewareGroups() *before* providers boot, so by
+                // the time we get here the groups are already in place. Append
+                // directly — using afterResolving would register a callback that
+                // never fires, because the kernel singleton is already cached and
+                // no further make() will happen.
+                $kernel = $this->app->make(HttpKernel::class);
+                if (method_exists($kernel, 'appendMiddlewareToGroup')) {
+                    $kernel->appendMiddlewareToGroup('web', InjectGuardianClient::class);
+                }
             }
         }
+
+        $this->registerRequestMonitoringMiddleware();
 
         if ($this->app->runningInConsole()) {
             $this->commands([
                 RunChecksCommand::class,
                 StatusCommand::class,
-                TestCommand::class,
                 InstallCommand::class,
                 PruneCommand::class,
                 PurgeGuardianQueueJobsCommand::class,
@@ -224,6 +222,36 @@ class GuardianServiceProvider extends ServiceProvider
         $this->registerExceptionHandler();
         $this->registerEventListeners();
         $this->registerCacheAggregatorTerminatingFlush();
+    }
+
+    private function registerRequestMonitoringMiddleware(): void
+    {
+        if (! config('guardian.monitoring.requests.enabled', true)) {
+            return;
+        }
+
+        if (! config('guardian.monitoring.requests.register_middleware', true)) {
+            return;
+        }
+
+        $groups = config('guardian.monitoring.requests.middleware_groups', ['web']);
+        if (! is_array($groups)) {
+            return;
+        }
+
+        $kernel = $this->app->make(HttpKernel::class);
+
+        if (! method_exists($kernel, 'appendMiddlewareToGroup')) {
+            return;
+        }
+
+        foreach ($groups as $group) {
+            if (! is_string($group) || $group === '') {
+                continue;
+            }
+
+            $kernel->appendMiddlewareToGroup($group, RequestMonitor::class);
+        }
     }
 
     private function registerSchedule(): void
