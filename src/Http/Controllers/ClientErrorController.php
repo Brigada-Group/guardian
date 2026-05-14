@@ -28,6 +28,7 @@ class ClientErrorController extends Controller
             'colno' => ['nullable', 'integer'],
             'page_url' => ['nullable', 'string', 'max:2048'],
             'component_stack' => ['nullable', 'string', 'max:8000'],
+            'framework_info' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $client = app(NightwatchClient::class);
@@ -62,6 +63,9 @@ class ClientErrorController extends Controller
             'stack_trace' => $stack !== '' ? "```\n{$stack}\n```" : 'N/A',
             'component_stack' => isset($validated['component_stack'])
                 ? StackTraceSanitizer::sanitize(mb_substr($validated['component_stack'], 0, 4000))
+                : null,
+            'framework_info' => isset($validated['framework_info'])
+                ? StackTraceSanitizer::sanitize(mb_substr($validated['framework_info'], 0, 2000))
                 : null,
             'severity' => 'error',
             'created_at' => now(),

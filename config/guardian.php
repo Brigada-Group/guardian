@@ -3,7 +3,6 @@
 return [
     'project_name' => env('GUARDIAN_PROJECT_NAME', env('APP_NAME', 'Laravel')),
     'environment' => env('GUARDIAN_ENVIRONMENT', env('APP_ENV', 'production')),
-    'discord_webhook_url' => (string) env('GUARDIAN_DISCORD_WEBHOOK', ''),
     'enabled_environments' => ['production'],
     'disabled_checks' => [],
     'thresholds' => [
@@ -48,6 +47,8 @@ return [
         'middleware' => ['web', 'throttle:60,1'],
         'capture_console_error' => env('GUARDIAN_CLIENT_CAPTURE_CONSOLE_ERROR', false),
         'hub_ingest_endpoint' => env('GUARDIAN_CLIENT_ERRORS_HUB_INGEST_ENDPOINT', 'client-errors'),
+        // Browser bundle capture: resources/js/guardian-client.js detects Webpack/Vite-style chunk
+        // and dynamic-import failures, resource load errors, and Error.cause / AggregateError chains.
         // Guards tried in order for POST /guardian/client-errors (session cookie). Default guard alone often misses SPA/Sanctum logins.
         'auth_guards' => ['web', 'sanctum'],
         'user_data_attributes' => [],
@@ -68,6 +69,11 @@ return [
     'monitoring' => [
         'requests' => [
             'enabled' => true,
+            // Append {@see \Brigada\Guardian\Http\Middleware\RequestMonitor} automatically.
+            // Disable if you register it yourself (global stack, custom order) to avoid double logging.
+            'register_middleware' => true,
+            // Middleware groups that receive RequestMonitor (add 'api' for typical JSON / Sanctum APIs).
+            'middleware_groups' => ['web'],
             'slow_threshold_ms' => 5000,
             'error_rate_threshold' => 50,      // alert when this many 5xx errors
             'error_rate_window_minutes' => 5,   // ...in this time window
