@@ -16,9 +16,12 @@ class HeartbeatSender
 
     public function buildPayload(): array
     {
+        $maxLen = (int) config('guardian.hub.scheduled_heartbeat.max_version_length', 50);
+        $maxLen = max(1, min(255, $maxLen));
+
         $payload = [
-            'php_version' => PHP_VERSION,
-            'laravel_version' => app()->version(),
+            'php_version' => mb_substr((string) PHP_VERSION, 0, $maxLen),
+            'laravel_version' => mb_substr((string) app()->version(), 0, $maxLen),
             'trace_id' => TraceContext::current(),
         ];
 
@@ -35,30 +38,41 @@ class HeartbeatSender
         return $payload;
     }
 
-    public function sendNow(): bool
+    /**
+     * @param  bool  $silent  Scheduled ticks: quieter logging via {@see NightwatchClient::send()} $quiet flag.
+     */
+    public function sendNow(bool $silent = false): bool
     {
         if (! $this->client->isConfigured()) {
-            Log::warning('Guardian: heartbeat skipped — client not configured', [
-                'guardian_internal' => true,
-            ]);
+            if (! $silent) {
+                Log::warning('Guardian: heartbeat skipped — client not configured', [
+                    'guardian_internal' => true,
+                ]);
+            }
 
             return false;
         }
 
         $payload = $this->buildPayload();
 
-        Log::info('Guardian: sending heartbeat', [
-            'has_verification_token' => isset($payload['verification_token']),
-            'guardian_internal' => true,
-        ]);
+        if (! $silent) {
+            Log::info('Guardian: sending heartbeat', [
+                'has_verification_token' => isset($payload['verification_token']),
+                'guardian_internal' => true,
+            ]);
+        }
 
-        $ok = $this->client->send('heartbeat', $payload);
+        $ok = $this->client->send('heartbeat', $payload, $silent);
 
-        if ($ok) {
+        if ($ok && ! $silent) {
             Log::info('Guardian: heartbeat delivered', [
                 'guardian_internal' => true,
             ]);
-        } else {
+        } elseif ($ok && $silent) {
+            Log::debug('Guardian: scheduled heartbeat delivered', [
+                'guardian_internal' => true,
+            ]);
+        } elseif (! $ok && ! $silent) {
             Log::warning('Guardian: heartbeat delivery failed', [
                 'guardian_internal' => true,
             ]);

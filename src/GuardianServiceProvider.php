@@ -260,9 +260,23 @@ class GuardianServiceProvider extends ServiceProvider
             $dailyTime = config('guardian.notifications.daily_summary_time', '06:00');
             $weeklyDay = $this->parseWeeklyDay(config('guardian.notifications.weekly_summary_day', 'monday'));
 
-            $schedule->call(function () {
-                app(HeartbeatSender::class)->sendNow();
-            })->everyFiveMinutes();
+            $scheduledHeartbeat = config('guardian.hub.scheduled_heartbeat', []);
+            if (is_array($scheduledHeartbeat)
+                && filter_var($scheduledHeartbeat['enabled'] ?? true, FILTER_VALIDATE_BOOLEAN)) {
+                $minutes = isset($scheduledHeartbeat['interval_minutes'])
+                    ? (int) $scheduledHeartbeat['interval_minutes']
+                    : 5;
+                $minutes = max(1, min(60, $minutes));
+                $cron = $minutes === 1 ? '* * * * *' : "*/{$minutes} * * * *";
+
+                $schedule->call(function () {
+                    try {
+                        app(HeartbeatSender::class)->sendNow(true);
+                    } catch (\Throwable) {
+                        // Scheduled heartbeats must not break Laravel's scheduler
+                    }
+                })->cron($cron)->name('guardian:nightwatch-hub-heartbeat');
+            }
             
             $schedule->command('guardian:run every_5_min')->everyFiveMinutes();
             $schedule->command('guardian:run hourly')->hourly();

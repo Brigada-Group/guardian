@@ -197,6 +197,23 @@ return [
         'retry' => 1,                      // number of retry attempts on failure
         'async' => true,                   // true = send via queued job (recommended)
         'queue' => 'default',              // queue name for async dispatches
+
+        /*
+        | Scheduled Nightwatch heartbeats (CLI schedule:run — no web traffic required).
+        | Keeps last_heartbeat_at fresh on the hub for idle apps. Minimum interval 1;
+        | avoid values under 1 minute — you will hammer the hub and gain little signal.
+        */
+        'scheduled_heartbeat' => [
+            'enabled' => filter_var(
+                env('GUARDIAN_SCHEDULED_HEARTBEAT_ENABLED', true),
+                FILTER_VALIDATE_BOOLEAN
+            ),
+            // Hub HeartbeatRequest caps these fields; keep aligned.
+            'max_version_length' => 50,
+            'interval_minutes' => max(1, min(60, (int) env('GUARDIAN_HEARTBEAT_INTERVAL_MINUTES', 5))),
+            // When using "quiet" scheduled sends, throttle repeated failure logs from NightwatchClient.
+            'failure_log_throttle_minutes' => max(1, (int) env('GUARDIAN_HEARTBEAT_FAIL_LOG_MINUTES', 15)),
+        ],
     ],
 
     /*
